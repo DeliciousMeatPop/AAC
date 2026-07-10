@@ -311,7 +311,7 @@ ARMGDDN.Autocracker/
     │   ├── GameOverlayRenderer64.dll   # Helps with the Overlay
     │   ├── steamclient.dll             # Required for cold client loader
     │   ├── steamclient64.dll           # Required for cold client loader
-    │   ├── steamclient_loader_x32.exe  # 32 bit cold client loader
+    │   ├── steamclient_loader_x86.exe  # 32 bit cold client loader
     │   └── steamclient_loader_x64.exe  # 64 bit cold client loader
     │
     ├── SteamlessCLI/
