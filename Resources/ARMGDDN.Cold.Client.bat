@@ -130,7 +130,7 @@ if "%bitness%"=="32" (
     echo Game is 32 bit. Using steamclient_loader_x86.exe
     set "chosenLoader=%loader32%"
     set "discardLoader=%loader64%"
-    set "loaderName=%fileName%CCLx32.exe"
+    set "loaderName=%fileName%CCLx86.exe"
 ) else (
     echo Game is 64 bit or unknown. Using steamclient_loader_x64.exe
     set "chosenLoader=%loader64%"
