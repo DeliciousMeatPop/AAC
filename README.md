@@ -1,16 +1,18 @@
-# ARMGDDN Autocracker - GBE Fork Edition 🎮🔧🔥
+# ARMGDDN Autocracker 🎮🔧🔥
 
 ![ARMGDDN Autocracker Logo](https://github.com/KaladinDMP/ARMGDDN-Autocracker/assets/92135051/ebcf7a21-8e5d-44e2-9165-cb280d8d275c)
 
-**The next evolution of ARMGDDN Autocracker, now powered by [GBE Fork](https://github.com/Detanup01/gbe_fork)!**
+**Right-click, crack, play. Now powered by [GBE Fork](https://github.com/Detanup01/gbe_fork).**
 
-Welcome to the GBE Fork Edition! We took everything you loved (and tolerated) about the original ARMGDDN Autocracker and gave it a shiny new engine. Same chaos, better emulation. If the OG Goldberg version was a trusty Honda Civic, this is the turbocharged Type R. Still gets you there, just... fancier.
+Welcome! This is ARMGDDN Autocracker — the "drag a file on it and go" Steam emulator tool you know, rebuilt on top of Detanup01's GBE Fork, the actively-maintained successor to Mr. Goldberg's original emulator. Same chaos, better emulation.
 
-## 🆕 What's Different From OG Goldberg Steam Emu?
+> **Heads up if you're coming from an older build:** there is no longer a separate "OG GSE" edition and a separate "GBE Fork" edition. There's just **ARMGDDN Autocracker**, and it runs on the GBE Fork engine. The installer will happily clean up the old dual-version menus for you (see [Context Menu](#-context-menu-7-zip-style)).
 
-Glad you asked! (Even if you didn't, I'm telling you anyway.)
+## 🆕 GBE Fork Format (a.k.a. why the files look different)
 
-| Feature | OG Goldberg | GBE Fork |
+If you used the ancient Goldberg-based version, the generated files changed. For the better. Glad you asked. (Even if you didn't, I'm telling you anyway.)
+
+| Thing | Old Goldberg | GBE Fork (now) |
 |---------|-------------|----------|
 | Stats format | `stats.txt` | `stats.json` |
 | Achievement icons | `achievement_images/` | `images/` |
@@ -36,10 +38,11 @@ Glad you asked! (Even if you didn't, I'm telling you anyway.)
 - **🎨 Game Icon Extraction** - Cold Client Loader extracts your game's icon and applies it to the renamed loader. Pretty AND functional.
 - **💾 Persistent User Settings** - Set your username and save location once, use it forever. Set `ask=0` to skip prompts entirely.
 - **📁 Smart AppID Detection** - Searches game folders for existing `steam_appid.txt` before asking you to find it.
+- **🔔 Daily Update Check** - `ARMGDDN.Main` quietly checks GitHub for a newer release once a day and tells you if one's out. No nagging, no phoning home more than once every 24 hours.
 
-### Installation & Integration  
-- **🖱️ Nested Context Menus** - Clean, 7-Zip style nested menus. All options under one parent menu, not scattered everywhere.
-- **🤝 Dual Version Support** - Works alongside OG GSE v2.0.0. Install both, get both in one unified menu. Use whichever works better for each game.
+### Installation & Integration
+- **🖱️ Nested Context Menu** - Clean, 7-Zip style menu. All options under one parent, not scattered everywhere. EXEs and DLLs get their own relevant options.
+- **🧹 Self-Repairing Installer** - Re-running the installer wipes any old/broken menu entries first (including the retired OG-GSE / GBE-Fork nested menus) and rebuilds fresh. Uninstaller erases everything.
 - **🛡️ Windows Defender Integration** - Right-click any folder → "AAC Folder Exclude" to add it to Defender exclusions. No more false positives.
 - **📦 Silent .NET Install** - Required runtime installs automatically and silently during context menu setup.
 
@@ -52,72 +55,32 @@ Glad you asked! (Even if you didn't, I'm telling you anyway.)
 ### VR Support
 - **🥽 VD Batmaker** - Creates batch files to launch cracked games through Virtual Desktop Streamer for VR headset users.
 
-## 🤝 Works With OG GSE v2.0.0!
-
-This GBE Fork edition is designed to play nice with the **newly updated [ARMGDDN Autocracker - OG GSE v2.0.0](https://github.com/KaladinDMP/ARMGDDN-Autocracker-OG-GSE)**! 
-
-### How It Works
-
-The context menu installer is smart (well, smart-ish). It looks for both versions in the parent folder:
-
-```
-ARMGDDN.Autocracker/                    # Parent folder (can be named anything)
-├── ARMGDDN.Autocracker.GBE-Fork/       # This one (GBE Fork)
-│   ├── ARMGDDN.Main.exe
-│   └── ...
-│
-├── ARMGDDN.Autocracker.OG-GSE/         # The OG (v2.0.0+)
-    ├── ARMGDDN.Main.exe
-    └── ...
-```
-
-When you run `AIOContextMenuSetupforAAC.exe`, it:
-
-1. **Checks for GBE Fork** → Found? Adds "GBE Fork" submenu
-2. **Checks for OG GSE** → Found? Adds "OG GSE" submenu
-3. **Both found?** → Installs BOTH under one parent menu!
-4. **Only one found?** → Just installs that one (no judgment)
-
-### Why Would You Want Both?
-
-- **GBE Fork** - Newer, actively maintained, more features, better for modern games
-- **OG GSE** - Tried and true, sometimes works better on older/quirky games
-
-Some games are picky. Having both options means you can try GBE Fork first, and if it acts up, switch to OG GSE without redownloading anything. It's like having both a Phillips and flathead screwdriver. Sure, one usually works, but sometimes you need the other.
-
-### Installation Scenarios
-
-| What You Have | What Gets Installed |
-|---------------|---------------------|
-| GBE-Fork only | Just GBE Fork submenu |
-| OG-GSE only | Just OG GSE submenu |
-| Both folders | Both submenus under one parent |
-| Neither (you goofed) | Error message and disappointment |
-
 ## ✨ Features
 
-### 🖱️ Nested Context Menu (7-Zip Style!)
+### 🖱️ Context Menu (7-Zip Style!)
 
-Gone are the days of cluttering your context menu with 47 different options. Now it's all neatly tucked away:
+Gone are the days of cluttering your context menu with 47 different options. Now it's all neatly tucked away under one parent, and EXEs and DLLs each show only what makes sense for them:
 
 ```
-Right-click any EXE/DLL →
+Right-click any EXE →
   ARMGDDN Autocracker →
-    ├── GBE Fork →
-    │     ├── Autocracker
-    │     ├── Cold Client
-    │     ├── Steam Stub Remover
-    │     ├── VD Batmaker (VR)
-    │     └── Steam Interfaces (DLL only)
-    │
-    └── OG GSE →  (if you have both installed)
-          └── ... same options
+    ├── Autocracker
+    ├── Cold Client
+    ├── Steam Stub Remover
+    └── VD Batmaker (VR)
+
+Right-click any DLL (steam_api / steam_api64) →
+  ARMGDDN Autocracker →
+    ├── Autocracker
+    └── Steam Interfaces
 
 Right-click any Folder →
   AAC Folder Exclude
 ```
 
 It's like a filing cabinet, but for cracking games. Marie Kondo would be proud. Or horrified. Probably both.
+
+**Upgrading from an old build?** Just run the installer again. Before it adds the current menu it erases the old dual-version (`GBE Fork` / `OG GSE`) submenus and every legacy flat entry from previous versions — so a re-install *repairs* a stale or broken menu instead of stacking on top of it. Want it all gone? Run the uninstaller.
 
 ### 🎛️ DLL Flavor Selection
 
@@ -162,9 +125,22 @@ saves_folder_name=GSE Saves
 ask=0
 ```
 
+### 🏆 Reliable Achievements & Stats
+
+The Steam Settings generator logs into Steam with an account and pulls each game's achievement/stat schema by asking one of ~250 bundled "top owner" accounts that own huge libraries (`Resources/Tools/top_owners_ids.txt`). That combo is what lets even niche games return their achievements instead of coming back empty — a big improvement over the old anonymous + tiny-list approach.
+
+**If the bundled account ever gets rate-limited** (it's shared, it happens), you can drop your own credentials in without recompiling anything. Create `Resources/Tools/steam_account.txt`:
+
+```ini
+username=YourSteamLogin
+password=YourSteamPassword
+```
+
+The generator caches a login token after the first successful sign-in, so it's silent afterward.
+
 ### 📁 GBE-Fork Format Steam Settings
 
-The `ARMGDDN.Steam.Settings.exe` now generates proper GBE-Fork format configs:
+`ARMGDDN.Steam.Settings` generates proper GBE-Fork format configs:
 
 ```
 steam_settings/
@@ -272,11 +248,11 @@ Steamless integration, same as always. If a game has a Steam stub protecting it,
 
 ### Option 1: Context Menu (The Fancy Way)
 
-1. Extract the whole `ARMGDDN.Autocracker.GBE-Fork` folder somewhere permanent
-2. Run `AIOContextMenuSetupforAAC.exe`
+1. Extract the whole `ARMGDDN.Autocracker` folder somewhere permanent
+2. Run `AIOContextMenuSetupforAAC.exe` **as administrator**
 3. Accept the warnings about the script talking (yes, it talks, deal with it)
 4. **Wait for .NET Desktop Runtime to install** (silent, automatic, required for Exclusion Helper)
-5. Right-click any EXE or DLL → ARMGDDN Autocracker → GBE Fork → Pick your poison. Or if you only use Windows Defender you can now right click on any folder and choose AAC Folder Exclusion to auto-add it. It even checks and makes sure you havent already excluded it.
+5. Right-click any EXE or DLL → ARMGDDN Autocracker → Pick your poison. Or right-click any folder and choose AAC Folder Exclude to auto-add it to Defender. It even checks and makes sure you haven't already excluded it.
 6. Follow the prompts
 7. Profit???
 
@@ -307,10 +283,10 @@ ARMGDDN.Main.exe "C:\Path\To\steam_api64.dll"
 ## 📁 Folder Structure
 
 ```
-ARMGDDN.Autocracker.GBE-Fork/
+ARMGDDN.Autocracker/
 ├── ARMGDDN.Main.exe                    # Main entry point
-├── AIOContextMenuSetupforAAC.exe       # Installs context menus
-├── AIOContextMenuUninstallerforAAC.exe # Removes context menus
+├── AIOContextMenuSetupforAAC.exe       # Installs context menus (self-repairing)
+├── AIOContextMenuUninstallerforAAC.exe # Removes context menus (current + legacy)
 ├── README.md                           # You are here
 │
 └── Resources/
@@ -335,7 +311,7 @@ ARMGDDN.Autocracker.GBE-Fork/
     │   ├── GameOverlayRenderer64.dll   # Helps with the Overlay
     │   ├── steamclient.dll             # Required for cold client loader
     │   ├── steamclient64.dll           # Required for cold client loader
-    │   ├── steamclient_loader_x32.exe  # 32 bit cold client loader
+    │   ├── steamclient_loader_x86.exe  # 32 bit cold client loader
     │   └── steamclient_loader_x64.exe  # 64 bit cold client loader
     │
     ├── SteamlessCLI/
@@ -363,9 +339,11 @@ ARMGDDN.Autocracker.GBE-Fork/
         ├── ExclusionHelper.deps.json                  # Helper for ExclusionHelper
         ├── ExclusionHelper.runtimeconfig.json         # Helper for ExclusionHelper
         ├── ffmpeg.exe                                 # For icon conversion (PNG→ICO)
-        ├── generate_interfaces_file.exe               # For old games that need it
+        ├── generate_interfaces_file.exe               # Steam Interfaces (DLL menu)
         ├── nircmd.exe                                 # For talking and cool stuff
         ├── options.txt                                # Your saved user preferences
+        ├── top_owners_ids.txt                         # ~250 owner IDs for schema lookups
+        ├── steam_account.txt                          # Optional: your own Steam login (see above)
         ├── rcedit-x64.exe                             # For applying icons to EXEs
         └── windowsdesktop-runtime-10.0.1-win-x64.exe  # .NET runtime (auto-installed)
 ```
@@ -377,7 +355,6 @@ This tool is for educational purposes and for games you legally own. We're not r
 - Games not working (sometimes it just be like that.)
 - Your PC gaining sentience (unrelated but still not our fault.)
 - Any Terms of Service violations (read them yourself, coward.)
-- Voting for Trump (we didn't and won't.)
 
 Use responsibly. Or don't. But if you don't, we don't know you.
 
@@ -390,7 +367,7 @@ Standing on the shoulders of giants (and some regular-sized people too):
 - **[Rat431](https://github.com/Rat431/ColdAPI_Steam)** - Cold Client Loaders humble beginnings, making impossible games possible
 - **[atom0s](https://github.com/atom0s/Steamless)** - Steamless, because Steam stubs are annoying
 - **[Sak32009](https://github.com/Sak32009/steam_py_fork)** - Steam module fixes that made everything faster
-- **[SteamLadder](https://steamladder.com/)** - API access for finding achievement/DLC data
+- **[SteamLadder](https://steamladder.com/)** - Where the top-owner data lineage comes from
 - **[NirSoft/NirCmd](https://www.nirsoft.net/utils/nircmd.html)** - For helping make the context menu install less boring
 - **[electron/rcedit](https://github.com/electron/rcedit)** - For making icon embedding possible
 - **[ffmpeg](https://www.ffmpeg.org/)** - For making .png to .ico easily! Who knew it could do that?! I sure didn't.
@@ -399,12 +376,9 @@ Standing on the shoulders of giants (and some regular-sized people too):
 
 ## 🔗 Links
 
-- **OG GSE Gitlab**: [mr_goldberg.gitlab.io/goldberg_emulator/](https://mr_goldberg.gitlab.io/goldberg_emulator/)
-- **GBE Fork Github**: [github.com/Detanup01/gbe_fork](https://github.com/Detanup01/gbe_fork)
-- **ARMGDDN Autocracker - OG-GSE**: [github.com/KaladinDMP/ARMGDDN-Autocracker-OG-GSE](https://github.com/KaladinDMP/ARMGDDN-Autocracker-OG-GSE)
-- **ARMGDDN Autocracker - GBE-Fork**: [github.com/KaladinDMP/ARMGDDN-Autocracker-GBE-Fork](https://github.com/KaladinDMP/ARMGDDN-Autocracker-GBE-Fork)
-- **cs.rin.ru Thread for the ARMGDDN Autocracker - OG-GSE**: [cs.rin.ru/forum/viewtopic.php?f=20&t=141375](https://cs.rin.ru/forum/viewtopic.php?f=20&t=141375)
-- **cs.rin.ru Thread for the ARMGDDN Autocracker - GBE-Fork**: [cs.rin.ru/forum/viewtopic.php?f=20&t=153779](https://cs.rin.ru/forum/viewtopic.php?f=20&t=153779)
+- **ARMGDDN Autocracker (this repo)**: [github.com/KaladinDMP/ARMGDDN-Autocracker](https://github.com/KaladinDMP/ARMGDDN-Autocracker)
+- **GBE Fork (the engine)**: [github.com/Detanup01/gbe_fork](https://github.com/Detanup01/gbe_fork)
+- **cs.rin.ru Thread**: [cs.rin.ru/forum/viewtopic.php?f=20&t=153779](https://cs.rin.ru/forum/viewtopic.php?f=20&t=153779)
 
 ## 🌟 Support
 

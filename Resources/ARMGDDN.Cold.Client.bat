@@ -123,11 +123,11 @@ echo Selecting correct Cold Client loader...
 echo.
 
 set "clientDir=%sourceDir%"
-set "loader32=steamclient_loader_x32.exe"
+set "loader32=steamclient_loader_x86.exe"
 set "loader64=steamclient_loader_x64.exe"
 
 if "%bitness%"=="32" (
-    echo Game is 32 bit. Using steamclient_loader_x32.exe
+    echo Game is 32 bit. Using steamclient_loader_x86.exe
     set "chosenLoader=%loader32%"
     set "discardLoader=%loader64%"
     set "loaderName=%fileName%CCLx32.exe"
