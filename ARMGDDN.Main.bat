@@ -4,6 +4,47 @@ echo ============================================
 echo   ARMGDDN Autocracker - GBE FORK
 echo ============================================
 echo.
+
+REM ============================================
+REM   Update check (runs at most once per day)
+REM ============================================
+REM Bump CURRENT_VERSION whenever you cut a new release so users get
+REM notified. It is compared against the latest GitHub release tag.
+set "CURRENT_VERSION=v1.0.5"
+set "UPDATE_REPO=KaladinDMP/ARMGDDN-Autocracker"
+set "updateStamp=%~dp0Resources\.update_check"
+set "today=%DATE%"
+
+set "lastCheck="
+if exist "%updateStamp%" set /p lastCheck=<"%updateStamp%"
+
+REM Only hit the network if we have not already checked today
+if "%lastCheck%"=="%today%" goto skip_update_check
+
+REM Record today's date first so a failed/offline check still waits a day
+> "%updateStamp%" echo %today%
+
+echo Checking for updates...
+set "latestVersion="
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "try { (Invoke-RestMethod -Uri 'https://api.github.com/repos/%UPDATE_REPO%/releases/latest' -Headers @{'User-Agent'='ARMGDDN-Autocracker'} -TimeoutSec 10).tag_name } catch { '' }"`) do set "latestVersion=%%V"
+
+if not defined latestVersion goto skip_update_check
+if /i "%latestVersion%"=="%CURRENT_VERSION%" (
+    echo You are on the latest version ^(%CURRENT_VERSION%^).
+    echo.
+    goto skip_update_check
+)
+
+echo.
+echo ============================================
+echo   UPDATE AVAILABLE!
+echo   Installed: %CURRENT_VERSION%    Latest: %latestVersion%
+echo   Download: https://github.com/%UPDATE_REPO%/releases/latest
+echo ============================================
+echo.
+
+:skip_update_check
+
 echo Processing file: "%~1"
 echo.
 
