@@ -3,7 +3,6 @@ PASSWORD = "Nogamesonthisaccountdontbother."
 
 import os
 import sys
-import json
 import urllib.request
 import urllib.error
 import threading
@@ -22,9 +21,11 @@ HARDCODED_STEAM_IDS = [
 ]
 
 STEAM_IDS_URL = "https://raw.githubusercontent.com/KaladinDMP/steam-top-accounts-data/main/steam_ids_only.txt"
-STEAM_APP_DICT_URL = "https://raw.githubusercontent.com/KaladinDMP/ARMGDDN-Autocracker-GBE-Fork/main/Resources/AppID/steam_app_dict.json"
 LOCAL_STEAM_IDS_FILE = "steam_ids_cache.txt"
-LOCAL_APP_DICT_FILE = "steam_app_dict_cache.json"
+# Bundled list of ~250 "top owner" Steam IDs. A game's stats schema is fetched
+# by asking an account that owns the game, so a larger owner pool massively
+# improves coverage for niche titles (this file replaces the old 20-ID list).
+TOP_OWNERS_FILE = "top_owners_ids.txt"
 
 def get_base_path():
     if getattr(sys, 'frozen', False):
@@ -34,7 +35,7 @@ def get_base_path():
 
 BASE_PATH = get_base_path()
 LOCAL_STEAM_IDS_FILE = os.path.join(BASE_PATH, LOCAL_STEAM_IDS_FILE)
-LOCAL_APP_DICT_FILE = os.path.join(BASE_PATH, LOCAL_APP_DICT_FILE)
+TOP_OWNERS_FILE = os.path.join(BASE_PATH, "Tools", TOP_OWNERS_FILE)
 
 def get_options_file_path():
     base = get_base_path()
@@ -209,29 +210,31 @@ def prompt_user_options():
     return options
 
 
-def load_steam_app_dict():
-    """Download and cache the known-games whitelist from the OG GSE repo."""
+def load_bundled_owner_ids():
+    """Load the bundled ~250 top-owner Steam IDs, always including the small
+    builtin fallback list in case the file is missing."""
+    ids = []
     try:
-        with urllib.request.urlopen(STEAM_APP_DICT_URL, timeout=10) as response:
-            content = response.read().decode('utf-8')
-            with open(LOCAL_APP_DICT_FILE, 'w', encoding='utf-8') as f:
-                f.write(content)
-            return json.loads(content)
-    except Exception as e:
-        print(f"Warning: Could not download game list from GitHub: {e}")
-        # Fall back to local cache
-        try:
-            with open(LOCAL_APP_DICT_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
+        with open(TOP_OWNERS_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        ids.append(int(line))
+                    except ValueError:
+                        pass
+    except OSError:
+        print("Note: top_owners_ids.txt not found, using builtin fallback IDs.")
+    for sid in HARDCODED_STEAM_IDS:
+        if sid not in ids:
+            ids.append(sid)
+    return ids
 
 
 def download_and_merge_steam_ids():
     """Download and merge Steam IDs from GitHub with hardcoded list."""
-    print(f"Starting with {len(HARDCODED_STEAM_IDS)} hardcoded Steam IDs...")
-    final_steam_ids = HARDCODED_STEAM_IDS.copy()
+    final_steam_ids = load_bundled_owner_ids()
+    print(f"Starting with {len(final_steam_ids)} bundled top-owner Steam IDs...")
     
     try:
         print("Attempting to download Steam IDs from GitHub...")
@@ -251,7 +254,7 @@ def download_and_merge_steam_ids():
                         pass
             
             for steam_id in github_steam_ids:
-                if steam_id not in HARDCODED_STEAM_IDS:
+                if steam_id not in final_steam_ids:
                     final_steam_ids.append(steam_id)
                     
     except Exception as e:
@@ -273,17 +276,57 @@ def download_and_merge_steam_ids():
     
     return final_steam_ids
 
-STEAM_APP_DICT = load_steam_app_dict()
 TOP_OWNER_IDS = download_and_merge_steam_ids()
 
 from stats_schema_achievement_gen import achievements_gen
-from controller_config_generator import parse_controller_vdf
 from steam.client import SteamClient
-from steam.client.cdn import CDNClient
-from steam.enums import common
 from steam.enums.common import EResult
 from steam.enums.emsg import EMsg
 from steam.core.msg import MsgProto
+
+def load_steam_credentials():
+    """Return (username, password). Defaults to the shipped shared account, but
+    can be overridden by Resources/Tools/steam_account.txt so credentials can be
+    swapped without recompiling (e.g. if the shared account gets rate-limited).
+    File format: 'username=...' and 'password=...' on separate lines."""
+    username, password = USERNAME, PASSWORD
+    creds_file = os.path.join(BASE_PATH, "Tools", "steam_account.txt")
+    try:
+        with open(creds_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if '=' not in line or line.startswith('#'):
+                    continue
+                key, value = line.split('=', 1)
+                key, value = key.strip().lower(), value.strip()
+                if key == 'username' and value:
+                    username = value
+                elif key == 'password' and value:
+                    password = value
+    except OSError:
+        pass
+    return username, password
+
+
+def steam_login(client, username, password):
+    """Log in with a real account. Falls back to the modern auth flow
+    (cli_login), which caches a refresh token so later runs are silent.
+    Account login is required to read stats schemas reliably -- anonymous
+    sessions can only see games owned by the top-owner accounts, so niche
+    titles come back with no achievements."""
+    result = client.login(username, password=password)
+    if result == EResult.OK:
+        return result
+    if result == EResult.InvalidPassword:
+        # Steam deprecated the old CM password flow; the password is fine but
+        # the new IAuthenticationService flow (cli_login) is required.
+        print("Steam requires its newer auth flow; switching to cli_login...")
+        try:
+            client.cli_login(username=username, password=password)
+        except TypeError:
+            client.cli_login()
+    return EResult.OK if client.logged_on else result
+
 
 if len(sys.argv) < 2:
     print("\nUsage: ARMGDDN.Steam.Settings.exe APPID\n\nExample: ARMGDDN.Steam.Settings.exe 480\n")
@@ -295,11 +338,15 @@ for id in sys.argv[1:]:
 
 client = SteamClient()
 
-print("Connecting to Steam (anonymous)...")
-result = client.anonymous_login()
-if result != EResult.OK:
-    print(f"Steam connection failed: {result}")
-    print("Check your internet connection and try again.")
+_username, _password = load_steam_credentials()
+print(f"Connecting to Steam as {_username}...")
+result = steam_login(client, _username, _password)
+if result != EResult.OK and not client.logged_on:
+    print(f"Steam login failed: {result}")
+    print("The bundled account may be rate-limited, or its password changed.")
+    print("Drop working credentials into Resources/Tools/steam_account.txt")
+    print("  username=YOURNAME")
+    print("  password=YOURPASS")
     sys.exit(1)
 print("Connected.")
 
@@ -410,25 +457,6 @@ def generate_achievement_stats(client, game_id, output_directory):
         print(f"Downloaded {len(images_to_download)} achievement images to images/ folder")
     
     return stats_generated
-
-
-def get_inventory_info(client, game_id):
-    return client.send_um_and_wait('Inventory.GetItemDefMeta#1', {'appid': game_id})
-
-
-def generate_inventory(client, game_id):
-    inventory = get_inventory_info(client, game_id)
-    if inventory.header.eresult != EResult.OK:
-        return None
-    url = f"https://api.steampowered.com/IGameInventory/GetItemDefArchive/v0001?appid={game_id}&digest={inventory.body.digest}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read()
-    except urllib.error.HTTPError as e:
-        print(f"HTTPError getting inventory: {e.code}")
-    except urllib.error.URLError as e:
-        print(f"URLError getting inventory: {e.reason}")
-    return None
 
 
 def get_dlc(raw_infos):
@@ -820,18 +848,7 @@ Stats_Pos_y=0.0
 user_options = prompt_user_options()
 
 for appid in appids:
-    app_key = str(appid)
-
-    # Use the known-games list only to show a friendly game name. Do NOT
-    # skip appids that are missing from it — the list can be incomplete or
-    # stale (new releases, regional titles, etc.), and hard-skipping here
-    # silently broke achievement/stat generation for perfectly valid games.
-    # The user explicitly asked for this appid, so always process it.
-    if STEAM_APP_DICT and app_key in STEAM_APP_DICT:
-        game_name = STEAM_APP_DICT[app_key]['original_name']
-        print(f"\nGame: {game_name} ({appid})")
-    else:
-        print(f"\nProcessing AppID {appid}")
+    print(f"\nProcessing AppID {appid}")
 
     out_dir = "steam_settings"
 
@@ -844,7 +861,9 @@ for appid in appids:
     game_info = raw["apps"][appid]
 
     if "common" in game_info:
-        game_info_common = game_info["common"]
+        game_name = game_info["common"].get("name")
+        if game_name:
+            print(f"Game: {game_name} ({appid})")
         try:
             generate_achievement_stats(client, appid, out_dir)
         except Exception as e:
