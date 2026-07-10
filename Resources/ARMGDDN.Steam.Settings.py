@@ -311,7 +311,11 @@ def get_stats_schema(client, game_id, owner_id):
     message.body.crc_stats = 0
     message.body.steam_id_for_user = owner_id
     client.send(message)
-    return client.wait_msg(EMsg.ClientGetUserStatsResponse, timeout=1)
+    # A 1s timeout was too aggressive: Steam's stats response often takes
+    # longer than a second, so valid schemas were being dropped and games
+    # ended up with no achievements. 3s is a safe balance of speed vs.
+    # reliability (the loop still breaks as soon as a schema comes back).
+    return client.wait_msg(EMsg.ClientGetUserStatsResponse, timeout=3)
 
 
 def download_achievement_images(game_id, image_names, output_folder):
@@ -818,16 +822,16 @@ user_options = prompt_user_options()
 for appid in appids:
     app_key = str(appid)
 
-    # Check game whitelist — skip DLCs and non-game apps
-    if STEAM_APP_DICT:
-        if app_key not in STEAM_APP_DICT:
-            print(f"\nAppID {appid} is not in the known games list — it may be a DLC or non-game app. Skipping.")
-            print("If this is a valid game, it may just be missing from the list.")
-            continue
+    # Use the known-games list only to show a friendly game name. Do NOT
+    # skip appids that are missing from it — the list can be incomplete or
+    # stale (new releases, regional titles, etc.), and hard-skipping here
+    # silently broke achievement/stat generation for perfectly valid games.
+    # The user explicitly asked for this appid, so always process it.
+    if STEAM_APP_DICT and app_key in STEAM_APP_DICT:
         game_name = STEAM_APP_DICT[app_key]['original_name']
         print(f"\nGame: {game_name} ({appid})")
     else:
-        print(f"\nProcessing AppID {appid} (game list unavailable, skipping whitelist check)")
+        print(f"\nProcessing AppID {appid}")
 
     out_dir = "steam_settings"
 
