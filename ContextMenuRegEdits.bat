@@ -1,63 +1,63 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+:: =======================================================
+::  ARMGDDN Autocracker - Context Menu Installer
 :: -------------------------------------------------------
-::  MASTER DIR IS ONE LEVEL ABOVE WHERE THIS SCRIPT LIVES
-::  So script can live in:
-::    ...\ARMGDDN.Autocracker.OG-GSE\
-::    ...\ARMGDDN.Autocracker.GBE-Fork\
-::  But masterDir will be:
-::    ...\ARMGDDN.Autocracker\
-:: -------------------------------------------------------
+::  Single-version setup. There is no separate OG-GSE or
+::  GBE-Fork edition any more, just ARMGDDN Autocracker.
+::  This script lives in the install folder itself, so all
+::  paths are relative to %~dp0 (no "one level up" logic).
+::
+::  On install it first ERASES any previous menu entries
+::  -- including the retired OG-GSE / GBE-Fork nested menus
+::  and legacy flat entries -- so re-running this FIXES a
+::  broken or outdated setup, then adds the current menus.
+:: =======================================================
 
-for %%A in ("%~dp0.") do set "masterDir=%%~dpA"
-set "masterDir=%masterDir:~0,-1%"
-set "masterDir=%masterDir:\\=\%"
+set "installDir=%~dp0"
+if "%installDir:~-1%"=="\" set "installDir=%installDir:~0,-1%"
 
+set "main=%installDir%\ARMGDDN.Main.exe"
+set "mainIcon=%installDir%\ARMGDDN.Main.exe,0"
+set "coldIcon=%installDir%\Resources\ARMGDDN.Cold.Client.exe,0"
+set "stubIcon=%installDir%\Resources\SteamlessCLI\Steamless.CLI.exe,0"
+set "vdIcon=%installDir%\Resources\ARMGDDN.VD.Batmaker.exe,0"
+set "siExe=%installDir%\Resources\Tools\generate_interfaces_file.exe"
+set "aacIcon=%installDir%\Resources\Tools\AAC_Autocracker.ico"
+set "nircmdPath=%installDir%\Resources\Tools\nircmd.exe"
+set "excludeExe=%installDir%\Resources\Tools\ExclusionHelper.exe"
+set "dotnetInstaller=%installDir%\Resources\Tools\windowsdesktop-runtime-10.0.1-win-x64.exe"
 
-:: Version dirs (no extra backslashes)
-set "ogDir=%masterDir%\ARMGDDN.Autocracker.OG-GSE"
-set "gbeDir=%masterDir%\ARMGDDN.Autocracker.GBE-Fork"
-
-echo Master dir: %masterDir%
-echo OG dir:     %ogDir%
-echo GBE dir:    %gbeDir%
+echo Install dir: %installDir%
 echo.
 
-:: -------------------------------------------------------
-::  FIND NIRCMD
-:: -------------------------------------------------------
-set "nircmdPath="
-
-for %%P in ("%ogDir%\Resources\Tools\nircmd.exe" "%gbeDir%\Resources\Tools\nircmd.exe") do (
-    if exist "%%~P" (
-        set "nircmdPath=%%~P"
-        goto :found_nircmd
-    )
+:: --- the main executable is required ---
+if not exist "%main%" (
+    echo ERROR: ARMGDDN.Main.exe not found in:
+    echo   %installDir%
+    echo Run this from inside the ARMGDDN Autocracker folder.
+    pause
+    exit /b
 )
 
-echo ERROR: nircmd.exe not found.
-echo Expected in either:
-echo   %ogDir%\Resources\Tools\
-echo   %gbeDir%\Resources\Tools\
-pause
-exit /b
-
-:found_nircmd
-echo Found nircmd: %nircmdPath%
-echo.
+:: --- nircmd is optional (the voice / intro fun) ---
+set "haveNircmd="
+if exist "%nircmdPath%" set "haveNircmd=1"
 
 :: -------------------------------------------------------
 ::  TALKY INTRO + ADMIN CHECK
 :: -------------------------------------------------------
-"%nircmdPath%" infobox "This Script TALKS." "Warning!"
-"%nircmdPath%" infobox "LOUDLY..." "Warning!"
-"%nircmdPath%" infobox "Turn down your volume NOW..." "Warning!"
-"%nircmdPath%" infobox "Ok I'm waiting..." "Warning!"
+if defined haveNircmd (
+    "%nircmdPath%" infobox "This Script TALKS." "Warning!"
+    "%nircmdPath%" infobox "LOUDLY..." "Warning!"
+    "%nircmdPath%" infobox "Turn down your volume NOW..." "Warning!"
+    "%nircmdPath%" infobox "Ok I'm waiting..." "Warning!"
+)
 
 cls
 
-"%nircmdPath%" speak text "This script needs admin to run."
+if defined haveNircmd "%nircmdPath%" speak text "This script needs admin to run."
 net session >nul 2>&1
 if %errorLevel% NEQ 0 (
     echo Please run this script as administrator.
@@ -65,108 +65,40 @@ if %errorLevel% NEQ 0 (
     exit /b
 )
 
-"%nircmdPath%" speak text "Installing Armageddon Autocracker context menus."
+if defined haveNircmd "%nircmdPath%" speak text "Installing Armageddon Autocracker context menus."
 echo.
 
 :: -------------------------------------------------------
 ::  INSTALL .NET DESKTOP RUNTIME (REQUIRED FOR EXCLUSIONHELPER)
 :: -------------------------------------------------------
-set "dotnetInstaller="
-
-for %%P in ("%gbeDir%\Resources\Tools\windowsdesktop-runtime-10.0.1-win-x64.exe" "%ogDir%\Resources\Tools\windowsdesktop-runtime-10.0.1-win-x64.exe") do (
-    if exist "%%~P" (
-        set "dotnetInstaller=%%~P"
-        goto :found_dotnet
+if exist "%dotnetInstaller%" (
+    echo Installing .NET Desktop Runtime (required for Exclusion Helper)...
+    echo This may take a moment...
+    if defined haveNircmd "%nircmdPath%" speak text "Installing dot net runtime. Please wait."
+    "%dotnetInstaller%" /quiet /norestart
+    if !errorlevel! EQU 0 (
+        echo .NET Desktop Runtime installed successfully.
+    ) else if !errorlevel! EQU 1638 (
+        echo .NET Desktop Runtime already installed.
+    ) else if !errorlevel! EQU 3010 (
+        echo .NET Desktop Runtime installed. Restart may be required.
+    ) else (
+        echo .NET Desktop Runtime installer returned code: !errorlevel!
     )
+    echo.
 )
-goto :skip_dotnet
-
-:found_dotnet
-echo Installing .NET Desktop Runtime (required for Exclusion Helper)...
-echo This may take a moment...
-"%nircmdPath%" speak text "Installing dot net runtime. Please wait."
-"%dotnetInstaller%" /quiet /norestart
-if %errorlevel% EQU 0 (
-    echo .NET Desktop Runtime installed successfully.
-) else if %errorlevel% EQU 1638 (
-    echo .NET Desktop Runtime already installed.
-) else if %errorlevel% EQU 3010 (
-    echo .NET Desktop Runtime installed. Restart may be required.
-) else (
-    echo .NET Desktop Runtime installation returned code: %errorlevel%
-)
-echo.
-
-:skip_dotnet
 
 :: -------------------------------------------------------
-::  DETECT OG / GBE AND SET PATHS
+::  FIX OLD SETUPS: erase any previous menu entries first
+::  (retired OG-GSE / GBE-Fork nested menus + legacy flat)
+::  so a re-install refreshes/repairs a stale setup.
 :: -------------------------------------------------------
-set "haveOG="
-set "haveGBE="
-
-:: OG
-if exist "%ogDir%\ARMGDDN.Main.exe" (
-    set "haveOG=1"
-    set "ogMain=%ogDir%\ARMGDDN.Main.exe"
-    set "ogIcon=%ogDir%\ARMGDDN.Main.exe,0"
-    set "ogCold=%ogDir%\Resources\ARMGDDN.Cold.Client.exe,0"
-    set "ogStub=%ogDir%\Resources\SteamlessCLI\Steamless.CLI.exe,0"
-    set "ogVDBat=%ogDir%\Resources\ARMGDDN.VD.Batmaker.exe,0"
-    set "ogSI=%ogDir%\Resources\Tools\generate_interfaces_file.exe"
-)
-
-:: GBE
-if exist "%gbeDir%\ARMGDDN.Main.exe" (
-    set "haveGBE=1"
-    set "gbeMain=%gbeDir%\ARMGDDN.Main.exe"
-    set "gbeIcon=%gbeDir%\ARMGDDN.Main.exe,0"
-    set "gbeCold=%gbeDir%\Resources\ARMGDDN.Cold.Client.exe,0"
-    set "gbeStub=%gbeDir%\Resources\SteamlessCLI\Steamless.CLI.exe,0"
-    set "gbeVDBat=%gbeDir%\Resources\ARMGDDN.VD.Batmaker.exe,0"
-    set "gbeSI=%gbeDir%\Resources\Tools\generate_interfaces_file.exe"
-)
-
-if not defined haveOG if not defined haveGBE (
-    echo ERROR: Neither OG nor GBE detected.
-    echo Expected:
-    echo   %ogDir%\ARMGDDN.Main.exe
-    echo   %gbeDir%\ARMGDDN.Main.exe
-    pause
-    exit /b
-)
-
-echo Detected:
-if defined haveOG  echo   - OG GSE
-if defined haveGBE echo   - GBE Fork
+echo Cleaning up any previous / outdated menu entries...
+call :cleanup_menus
 echo.
 
 :: -------------------------------------------------------
-::  FIND AAC AUTOCRACKER ICON (MAIN PARENT ICON)
-:: -------------------------------------------------------
-set "aacIcon="
-
-for %%P in ("%ogDir%\Resources\Tools\AAC_Autocracker.ico" "%gbeDir%\Resources\Tools\AAC_Autocracker.ico") do (
-    if exist "%%~P" (
-        set "aacIcon=%%~P"
-        goto :found_aac
-    )
-)
-
-echo ERROR: AAC_Autocracker.ico missing.
-echo Expected in either:
-echo   %ogDir%\Resources\Tools\AAC_Autocracker.ico
-echo   %gbeDir%\Resources\Tools\AAC_Autocracker.ico
-pause
-exit /b
-
-:found_aac
-echo Using AAC Autocracker icon:
-echo   %aacIcon%
-echo.
-
-:: -------------------------------------------------------
-::  CREATE PARENT MENUS FOR EXE / DLL / DIRECTORY
+::  PARENT MENUS FOR EXE / DLL
 :: -------------------------------------------------------
 for %%T in (exefile dllfile) do (
     reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "MUIVerb" /t REG_SZ /d "ARMGDDN Autocracker" /f
@@ -175,109 +107,46 @@ for %%T in (exefile dllfile) do (
 )
 
 :: -------------------------------------------------------
-::  AAC FOLDER EXCLUDE - TOP LEVEL DIRECTORY MENU
+::  EXE SUBMENU: Autocracker / Cold Client / Stub / VD Bat
 :: -------------------------------------------------------
-set "excludeExe="
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_Autocracker" /v "Icon"   /d "%mainIcon%" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_Autocracker\command" /ve /d "\"%main%\" \"%%1\"" /f
 
-:: Find ExclusionHelper from either version
-for %%P in ("%gbeDir%\Resources\Tools\ExclusionHelper.exe" "%ogDir%\Resources\Tools\ExclusionHelper.exe") do (
-    if exist "%%~P" (
-        set "excludeExe=%%~P"
-        goto :found_exclude
-    )
-)
-goto :skip_exclude
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_ColdClient" /v "MUIVerb" /d "Cold Client" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_ColdClient" /v "Icon"   /d "%coldIcon%" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_ColdClient\command" /ve /d "\"%main%\" \"%%1\" \"3\"" /f
 
-:found_exclude
-echo Adding Defender Exclusion context menu...
-reg add "HKCR\Directory\shell\AACFolderExclude" /v "MUIVerb" /t REG_SZ /d "AAC Folder Exclude" /f
-reg add "HKCR\Directory\shell\AACFolderExclude" /v "Icon" /t REG_SZ /d "%excludeExe%,0" /f
-reg add "HKCR\Directory\shell\AACFolderExclude\command" /ve /d "\"%excludeExe%\" \"%%1\"" /f
-"%nircmdPath%" speak text "Added Defender folder exclusion context menu."
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\03_SteamStub" /v "MUIVerb" /d "Steam Stub Remover" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\03_SteamStub" /v "Icon"   /d "%stubIcon%" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\03_SteamStub\command" /ve /d "\"%main%\" \"%%1\" \"1\"" /f
 
-:skip_exclude
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\04_VDBat" /v "MUIVerb" /d "VD Batmaker (VR)" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\04_VDBat" /v "Icon"   /d "%vdIcon%" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\04_VDBat\command" /ve /d "\"%main%\" \"%%1\" \"2\"" /f
 
 :: -------------------------------------------------------
-::  GBE FORK SUBMENUS (01_GBE)
+::  DLL SUBMENU: Autocracker / Steam Interfaces
 :: -------------------------------------------------------
-if defined haveGBE (
-    :: EXE
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE" /v "MUIVerb" /d "GBE Fork" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE" /v "Icon"   /d "%gbeIcon%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE" /v "SubCommands" /d "" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_Autocracker" /v "Icon"   /d "%mainIcon%" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_Autocracker\command" /ve /d "\"%main%\" \"%%1\"" /f
 
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\01_Autocracker" /v "Icon"   /d "%gbeIcon%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\01_Autocracker\command" /ve /d "\"%gbeMain%\" \"%%1\"" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_SteamInterfaces" /v "MUIVerb" /d "Steam Interfaces" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_SteamInterfaces" /v "Icon"   /d "%coldIcon%" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_SteamInterfaces\command" /ve /d "\"%siExe%\" \"%%1\"" /f
 
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\02_ColdClient" /v "MUIVerb" /d "Cold Client" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\02_ColdClient" /v "Icon"   /d "%gbeCold%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\02_ColdClient\command" /ve /d "\"%gbeMain%\" \"%%1\" \"3\"" /f
-
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\03_SteamStub" /v "MUIVerb" /d "Steam Stub Remover" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\03_SteamStub" /v "Icon"   /d "%gbeStub%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\03_SteamStub\command" /ve /d "\"%gbeMain%\" \"%%1\" \"1\"" /f
-
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\04_VDBat" /v "MUIVerb" /d "VD Batmaker (VR)" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\04_VDBat" /v "Icon"   /d "%gbeVDBat%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\04_VDBat\command" /ve /d "\"%gbeMain%\" \"%%1\" \"2\"" /f
-
-    :: DLL
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE" /v "MUIVerb" /d "GBE Fork" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE" /v "Icon"   /d "%gbeIcon%" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE" /v "SubCommands" /d "" /f
-
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\01_Autocracker" /v "Icon"   /d "%gbeIcon%" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\01_Autocracker\command" /ve /d "\"%gbeMain%\" \"%%1\"" /f
-
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\02_SteamInterfaces" /v "MUIVerb" /d "Steam Interfaces" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\02_SteamInterfaces" /v "Icon"   /d "%gbeCold%" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\01_GBE\shell\02_SteamInterfaces\command" /ve /d "\"%gbeSI%\" \"%%1\"" /f
-	)
-	"%nircmdPath%" speak text "Added Goldberg Steam Emu Fork submenu for executable, DLL, and folder context menus."
-)
-
+if defined haveNircmd "%nircmdPath%" speak text "Added executable and DLL context menus."
 
 :: -------------------------------------------------------
-::  OG GSE SUBMENUS (02_OG)
+::  AAC FOLDER EXCLUDE - DIRECTORY MENU (standalone)
 :: -------------------------------------------------------
-if defined haveOG (
-    :: EXE
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG" /v "MUIVerb" /d "OG GSE" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG" /v "Icon"   /d "%ogIcon%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG" /v "SubCommands" /d "" /f
-
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\01_Autocracker" /v "Icon"   /d "%ogIcon%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\01_Autocracker\command" /ve /d "\"%ogMain%\" \"%%1\"" /f
-
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\02_ColdClient" /v "MUIVerb" /d "Cold Client" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\02_ColdClient" /v "Icon"   /d "%ogCold%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\02_ColdClient\command" /ve /d "\"%ogMain%\" \"%%1\" \"3\"" /f
-
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\03_SteamStub" /v "MUIVerb" /d "Steam Stub Remover" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\03_SteamStub" /v "Icon"   /d "%ogStub%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\03_SteamStub\command" /ve /d "\"%ogMain%\" \"%%1\" \"1\"" /f
-
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\04_VDBat" /v "MUIVerb" /d "VD Batmaker (VR)" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\04_VDBat" /v "Icon"   /d "%ogVDBat%" /f
-    reg add "HKCR\exefile\shell\ARMGDDNAutocracker\shell\02_OG\shell\04_VDBat\command" /ve /d "\"%ogMain%\" \"%%1\" \"2\"" /f
-
-    :: DLL
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG" /v "MUIVerb" /d "OG GSE" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG" /v "Icon"   /d "%ogIcon%" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG" /v "SubCommands" /d "" /f
-
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG\shell\01_Autocracker" /v "Icon"   /d "%ogIcon%" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG\shell\01_Autocracker\command" /ve /d "\"%ogMain%\" \"%%1\"" /f
-
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG\shell\02_SteamInterfaces" /v "MUIVerb" /d "Steam Interfaces" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG\shell\02_SteamInterfaces" /v "Icon"   /d "%ogCold%" /f
-    reg add "HKCR\dllfile\shell\ARMGDDNAutocracker\shell\02_OG\shell\02_SteamInterfaces\command" /ve /d "\"%ogSI%\" \"%%1\"" /f
-    )
-    "%nircmdPath%" speak text "Added O.G. Goldberg Steam Emu submenu for executable, DLL, and folder context menus."
+if exist "%excludeExe%" (
+    echo Adding Defender Exclusion context menu...
+    reg add "HKCR\Directory\shell\AACFolderExclude" /v "MUIVerb" /t REG_SZ /d "AAC Folder Exclude" /f
+    reg add "HKCR\Directory\shell\AACFolderExclude" /v "Icon" /t REG_SZ /d "%excludeExe%,0" /f
+    reg add "HKCR\Directory\shell\AACFolderExclude\command" /ve /d "\"%excludeExe%\" \"%%1\"" /f
+    if defined haveNircmd "%nircmdPath%" speak text "Added Defender folder exclusion context menu."
 )
 
 echo.
@@ -286,13 +155,54 @@ echo   Context Menu Installation Complete!
 echo ============================================
 echo.
 echo   ARMGDDN Autocracker
-echo     +-- GBE Fork  (if present)
-echo     +-- OG GSE    (if present)
+echo     (EXE)  Autocracker / Cold Client / Steam Stub Remover / VD Batmaker
+echo     (DLL)  Autocracker / Steam Interfaces
 echo.
-echo   AAC Folder Exclude (standalone)
+echo   AAC Folder Exclude (right-click any folder)
 echo.
-"%nircmdPath%" speak text "All context menu options added successfully. Enjoy."
+if defined haveNircmd "%nircmdPath%" speak text "All context menu options added successfully. Enjoy."
 pause
 
 endlocal
 exit /b
+
+:: =======================================================
+::  :cleanup_menus
+::  Erases ALL current + legacy ARMGDDN menu entries.
+::  Same coverage as RemoveContextMenu.bat, used here so
+::  installing over an old/broken setup repairs it.
+:: =======================================================
+:cleanup_menus
+:: current + retired nested master keys (also drops OG/GBE subtrees)
+for %%T in (exefile dllfile Directory) do (
+    reg delete "HKCR\%%T\shell\ARMGDDNAutocracker" /f >nul 2>&1
+)
+:: retired version subkeys, in case only a parent lingered
+for %%V in ("01_GBE" "02_OG" "01_OG" "02_GBE" "GBE Fork" "OG GSE") do (
+    for %%T in (exefile dllfile Directory) do (
+        reg delete "HKCR\%%T\shell\ARMGDDNAutocracker\shell\%%~V" /f >nul 2>&1
+    )
+)
+:: legacy flat entries (v1.x - v2.x) and every old name variant
+for %%K in (
+    "AutoCracker"
+    "ColdClient"
+    "Remove Steam Stub"
+    "VD bat"
+    "ARMGDDN Autocracker"
+    "ARMGDDN Cold Client"
+    "ARMGDDN Steam Stub Remover"
+    "ARMGDDN VD Batmaker"
+    "SteamInterfaces"
+    "Steam Interfaces"
+    "ARMGDDN_Autocracker"
+    "ARMGDDN-Autocracker"
+    "Autocracker"
+) do (
+    for %%T in (exefile dllfile Directory) do (
+        reg delete "HKCR\%%T\shell\%%~K" /f >nul 2>&1
+    )
+)
+:: old standalone folder-exclude (re-added afterwards)
+reg delete "HKCR\Directory\shell\AACFolderExclude" /f >nul 2>&1
+goto :eof

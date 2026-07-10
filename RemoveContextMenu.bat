@@ -4,7 +4,7 @@ setlocal EnableDelayedExpansion
 echo.
 echo ============================================
 echo   ARMGDDN Autocracker - Registry Cleanup
-echo   Removes ALL context menu entries (OG + GBE)
+echo   Removes ALL menu entries (current + legacy OG/GBE)
 echo ============================================
 echo.
 
