@@ -950,7 +950,96 @@ Stats_Pos_y=0.0
     print("Created configs.overlay.ini.disabled")
 
 
+def _tools_file(name):
+    return os.path.join(BASE_PATH, "Tools", name)
+
+
+def _append_config_line(path, value):
+    """Append a value on its own line to a config file (keeps the template/comments)."""
+    try:
+        existing = ""
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                existing = f.read()
+        with open(path, 'a', encoding='utf-8') as f:
+            if existing and not existing.endswith("\n"):
+                f.write("\n")
+            f.write(value + "\n")
+        return True
+    except OSError as e:
+        print(f"Could not write {path}: {e}")
+        return False
+
+
+def prompt_first_run_setup():
+    """First run only: if no Steam Web API key / personal Steam ID is set yet,
+    offer to add them (with instructions), and explain how to add them later
+    if skipped. A marker file makes this run only once."""
+    marker = _tools_file(".setup_done")
+    if os.path.exists(marker):
+        return
+
+    key_file = _tools_file("steam_webapi_key.txt")
+    ids_file = _tools_file("my_steam_ids.txt")
+    need_key = not load_webapi_key()
+    need_id = not _read_owner_id_file(ids_file)
+    if not need_key and not need_id:
+        return
+
+    print()
+    print("============================================")
+    print("  First-time setup (shown once)")
+    print("============================================")
+
+    if need_key:
+        print()
+        print("A Steam Web API key lets this tool grab achievements & stats for ANY")
+        print("game directly by AppID -- the most reliable method. It's free:")
+        print("  1. Open https://steamcommunity.com/dev/apikey  (sign in)")
+        print("  2. Enter any domain (e.g. localhost) and agree")
+        print("  3. Copy the key it shows you")
+        print()
+        try:
+            answer = input("Paste your Steam Web API key now (or press Enter to skip): ").strip()
+        except EOFError:
+            answer = ""
+        if answer:
+            if _append_config_line(key_file, answer):
+                print("Saved! Reliable achievement fetching is now enabled.")
+        else:
+            print("No problem. To add it later, paste your key on a line in:")
+            print(f"   {key_file}")
+
+    if need_id:
+        print()
+        print("Optional: add your own SteamID64 so games you've PLAYED get looked up")
+        print("first during the fallback owner scan (a small speed-up).")
+        print("Find your 17-digit SteamID64 at steamid.io or steamdb.info/calculator.")
+        print()
+        try:
+            answer = input("Enter your SteamID64 now (or press Enter to skip): ").strip()
+        except EOFError:
+            answer = ""
+        if answer.isdigit() and len(answer) >= 17:
+            if _append_config_line(ids_file, answer):
+                print("Saved!")
+        elif answer:
+            print("That doesn't look like a 17-digit SteamID64 -- skipping.")
+            print(f"   Add it later (one per line) in: {ids_file}")
+        else:
+            print("No problem. To add it later, put it on a line (one per line) in:")
+            print(f"   {ids_file}")
+
+    try:
+        with open(marker, 'w', encoding='utf-8') as f:
+            f.write("first-run setup shown\n")
+    except OSError:
+        pass
+    print()
+
+
 # Main execution
+prompt_first_run_setup()
 user_options = prompt_user_options()
 
 for appid in appids:

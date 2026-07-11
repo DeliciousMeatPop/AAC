@@ -133,6 +133,8 @@ No login is required. (Real-account login isn't used on purpose: Steam's newer a
 
 **Best option — use a Steam Web API key.** Drop a free key into `Resources/Tools/steam_webapi_key.txt` and the generator pulls each game's schema **directly by AppID** from Steam's Web API (`GetSchemaForGame`) instead of hunting for an owner. This is owner-independent and reliable — it fixes niche games the top-owner scan can't find, and it's fast. Grab a key (30 seconds) at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). If a key is present it's used first, with the owner scan as fallback.
 
+> **First run:** the very first time you generate a `steam_settings` folder, the tool walks you through adding the Web API key (and, optionally, your SteamID64) with instructions. Skip either and it tells you exactly which file to drop it in later — and it won't nag you again.
+
 **Faster owner scan (no key):** drop your own SteamID64 into `Resources/Tools/my_steam_ids.txt` (one per line). Those IDs are tried **first**, so if you own *and have played* the game it can be an instant hit. Note the owner scan can still miss a game if no queryable account has generated stats for it — which is exactly what the Web API key avoids.
 
 ### 📁 GBE-Fork Format Steam Settings

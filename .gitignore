@@ -4,3 +4,4 @@ __pycache__/
 Resources/steam_ids_cache.txt
 Resources/steam_app_dict_cache.json
 Resources/.update_check
+Resources/Tools/.setup_done
