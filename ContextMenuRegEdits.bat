@@ -18,25 +18,37 @@ setlocal EnableDelayedExpansion
 set "installDir=%~dp0"
 if "%installDir:~-1%"=="\" set "installDir=%installDir:~0,-1%"
 
-set "main=%installDir%\ARMGDDN.Main.exe"
-set "mainIcon=%installDir%\ARMGDDN.Main.exe,0"
+set "aacIcon=%installDir%\Resources\Tools\AAC_Autocracker.ico"
 set "coldIcon=%installDir%\Resources\ARMGDDN.Cold.Client.exe,0"
 set "stubIcon=%installDir%\Resources\SteamlessCLI\Steamless.CLI.exe,0"
 set "vdIcon=%installDir%\Resources\ARMGDDN.VD.Batmaker.exe,0"
 set "siExe=%installDir%\Resources\Tools\generate_interfaces_file.exe"
-set "aacIcon=%installDir%\Resources\Tools\AAC_Autocracker.ico"
 set "nircmdPath=%installDir%\Resources\Tools\nircmd.exe"
 set "excludeExe=%installDir%\Resources\Tools\ExclusionHelper.exe"
 set "dotnetInstaller=%installDir%\Resources\Tools\windowsdesktop-runtime-10.0.1-win-x64.exe"
 
+:: --- Main launcher: prefer the built .exe, fall back to the .bat ---
+::  (%main% is what every menu command runs; a wrong/empty value is what
+::   produces the "no app associated with it" error when you click a verb.)
+set "main=%installDir%\ARMGDDN.Main.exe"
+set "mainIcon=%installDir%\ARMGDDN.Main.exe,0"
+if not exist "%main%" (
+    if exist "%installDir%\ARMGDDN.Main.bat" (
+        set "main=%installDir%\ARMGDDN.Main.bat"
+        set "mainIcon=%aacIcon%"
+    )
+)
+
 echo Install dir: %installDir%
+echo Main launcher: %main%
 echo.
 
-:: --- the main executable is required ---
+:: --- the main launcher is required ---
 if not exist "%main%" (
-    echo ERROR: ARMGDDN.Main.exe not found in:
+    echo ERROR: ARMGDDN.Main.exe ^(or ARMGDDN.Main.bat^) not found in:
     echo   %installDir%
-    echo Run this from inside the ARMGDDN Autocracker folder.
+    echo Put this script in the ARMGDDN Autocracker folder next to
+    echo ARMGDDN.Main.exe, then run it again.
     pause
     exit /b
 )
