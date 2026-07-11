@@ -1,6 +1,3 @@
-USERNAME = "AchievementTestAccount"
-PASSWORD = "Nogamesonthisaccountdontbother."
-
 import os
 import sys
 import urllib.request
@@ -284,50 +281,6 @@ from steam.enums.common import EResult
 from steam.enums.emsg import EMsg
 from steam.core.msg import MsgProto
 
-def load_steam_credentials():
-    """Return (username, password). Defaults to the shipped shared account, but
-    can be overridden by Resources/Tools/steam_account.txt so credentials can be
-    swapped without recompiling (e.g. if the shared account gets rate-limited).
-    File format: 'username=...' and 'password=...' on separate lines."""
-    username, password = USERNAME, PASSWORD
-    creds_file = os.path.join(BASE_PATH, "Tools", "steam_account.txt")
-    try:
-        with open(creds_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if '=' not in line or line.startswith('#'):
-                    continue
-                key, value = line.split('=', 1)
-                key, value = key.strip().lower(), value.strip()
-                if key == 'username' and value:
-                    username = value
-                elif key == 'password' and value:
-                    password = value
-    except OSError:
-        pass
-    return username, password
-
-
-def steam_login(client, username, password):
-    """Log in with a real account. Falls back to the modern auth flow
-    (cli_login), which caches a refresh token so later runs are silent.
-    Account login is required to read stats schemas reliably -- anonymous
-    sessions can only see games owned by the top-owner accounts, so niche
-    titles come back with no achievements."""
-    result = client.login(username, password=password)
-    if result == EResult.OK:
-        return result
-    if result == EResult.InvalidPassword:
-        # Steam deprecated the old CM password flow; the password is fine but
-        # the new IAuthenticationService flow (cli_login) is required.
-        print("Steam requires its newer auth flow; switching to cli_login...")
-        try:
-            client.cli_login(username=username, password=password)
-        except TypeError:
-            client.cli_login()
-    return EResult.OK if client.logged_on else result
-
-
 if len(sys.argv) < 2:
     print("\nUsage: ARMGDDN.Steam.Settings.exe APPID\n\nExample: ARMGDDN.Steam.Settings.exe 480\n")
     sys.exit(1)
@@ -338,15 +291,17 @@ for id in sys.argv[1:]:
 
 client = SteamClient()
 
-_username, _password = load_steam_credentials()
-print(f"Connecting to Steam as {_username}...")
-result = steam_login(client, _username, _password)
-if result != EResult.OK and not client.logged_on:
-    print(f"Steam login failed: {result}")
-    print("The bundled account may be rate-limited, or its password changed.")
-    print("Drop working credentials into Resources/Tools/steam_account.txt")
-    print("  username=YOURNAME")
-    print("  password=YOURPASS")
+# Anonymous login -- no account or password needed. Each game's stats schema
+# is fetched from the top-owner accounts (TOP_OWNER_IDS) via ClientGetUserStats,
+# which works fine on an anonymous session. (Real-account login via this library
+# is broken by Steam's newer IAuthenticationService flow: it rejects the old CM
+# password login with InvalidPassword even when the password is correct, and
+# then loops asking for the password.)
+print("Connecting to Steam (anonymous)...")
+result = client.anonymous_login()
+if result != EResult.OK:
+    print(f"Steam connection failed: {result}")
+    print("Check your internet connection and try again.")
     sys.exit(1)
 print("Connected.")
 

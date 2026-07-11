@@ -6,28 +6,63 @@ Welcome to the ARMGDDN Autocracker Changelog! Same chaos, better emulation, more
 Achievements are back, the tool checks itself for updates, and the whole thing is now just *one* ARMGDDN Autocracker instead of the old OG/GBE split. Spring cleaning, in July.
 
 **Highlights**
-- 🏆 **Achievements Actually Work Again:** The Steam Settings generator logs in with an account again. The switch to anonymous login could only see games owned by a tiny hardcoded list, so niche titles (looking at you, StarMiner) came back with nothing. It now pulls achievement/stat schemas against a bundled list of ~250 top-owner accounts, so things generate reliably instead of silently skipping.
+- 🏆 **Achievements Actually Work Again:** The old build only queried a tiny 20-account owner list (and gated games behind a whitelist), so niche titles (looking at you, StarMiner) came back with nothing. It now pulls achievement/stat schemas against the full bundled list of ~250 top-owner accounts with the whitelist gone, so far more games generate reliably instead of silently skipping — all over an anonymous connection, no account or password needed.
 - ⬆️ **Latest GBE Fork Core:** Updated all the bundled GBE Fork pieces — the `steam_api` / `steam_api64` DLLs (regular and ExOL), the Cold Client Loader files, and the tooling behind the `steam_settings` folder — to Detanup01's newest release (May 30, 2026). Latest emulator fixes and game compatibility, baked in.
-- 🔑 **Bring-Your-Own-Account:** If the shared achievement account ever gets rate-limited, drop a `Resources/Tools/steam_account.txt` with `username=` / `password=` and it'll use that instead — no recompiling. It caches a login token so later runs stay silent.
 - 🔔 **Daily Update Check:** `ARMGDDN.Main` quietly checks GitHub for a newer release once every 24 hours and tells you if one's out. No spam, no phoning home more than once a day.
 - 🧹 **One Brand, Cleaner Menus:** No more separate OG-GSE / GBE-Fork editions or nested version submenus — just a single **ARMGDDN Autocracker** menu. EXEs get Autocracker / Cold Client / Steam Stub Remover / VD Batmaker; DLLs get Autocracker / Steam Interfaces; folders get AAC Folder Exclude.
 - 🔧 **Self-Repairing Installer:** Re-running the context-menu installer now wipes any old or broken entries first (including the retired OG/GBE nested menus and every legacy flat entry) before rebuilding, so a re-install *fixes* a busted setup. The uninstaller still nukes everything.
 - 🏷️ **x86 Loader Naming:** The 32-bit Cold Client loader is `steamclient_loader_x86.exe` now, and the renamed output matches as `ExeNameCCLx86.exe` (64-bit unchanged).
 
 **Technical Details**
-- Steam Settings: restored a resilient account login with a `cli_login` fallback for Steam's newer auth flow; replaced the 20-ID hardcoded owner list with a bundled `top_owners_ids.txt` (~250 IDs, still merged with the online list).
+- Steam Settings: stays on anonymous login (real-account login via the steam library is broken by Steam's newer IAuthenticationService flow, which rejects the old password login with InvalidPassword); replaced the 20-ID hardcoded owner list with a bundled `top_owners_ids.txt` (~250 IDs, still merged with the online list) — the bigger owner pool is what actually fixes coverage.
 - Dropped the per-run ~16 MB `steam_app_dict.json` download and the whitelist gate entirely; the game name now comes from Steam's product info, which was already being fetched.
 - Removed dead code (unused inventory helpers and stale imports).
-- Context menu now targets a single install folder via `%~dp0` instead of the old "one level up" dual-version detection.
+- Context menu rebuilt as a single-folder installer that locates its own install directory at runtime, so it works both as the raw `.bat` and as the compiled `.exe` (which can unpack to a temp dir where `%~dp0` is useless).
+- Installer and uninstaller reworked to compile cleanly — no more "was unexpected at this time" crashes from batch-parser quirks (stray parentheses, multi-line `for` lists, subroutines).
 
 **Notes**
 - Coming from an older build? Just run the installer again — it cleans up the old menus for you. Or run the uninstaller for a totally clean slate.
 
 ---
 
-## **v1.0.2 - v1.0.4**
-Various fixes when steam broke shit. Not worth listing.
+## **v1.0.4 - 06/28/2026**
+Housekeeping after the OG version got archived.
 
+**Highlights**
+- 📍 **New Home for the Data:** Archiving the OG-GSE repo stopped the automated workflow both versions shared, so it moved here — and the App ID and Steam Settings components were repointed to the new location.
+
+**Notes**
+- Updating from v1.0.x? Just replace `ARMGDDN.App.ID.exe` and `ARMGDDN.Steam.Settings.exe`. Fresh install? Grab the whole zip.
+
+---
+
+## **v1.0.3 - 06/28/2026**
+Steam changed something on their end and broke logins. Patched, and faster too.
+
+**Highlights**
+- 🔓 **Login Fix:** The Steam Settings tool was throwing a bogus "bad login info" error that wasn't even true. It now connects anonymously with a fallback instead of hard-failing. *(The anonymous approach stuck; v1.0.5 later fixed the "some games have no achievements" gap by expanding the top-owner list to ~250 accounts.)*
+- ⚡ **Faster steam_settings:** Folder creation was taking forever — refactored for speed.
+- 🏆 **String-Type Schemas:** Carries the v1.0.2 achievement/stat fix for games that use string type identifiers.
+
+**Notes**
+- Updating? Just replace `ARMGDDN.Steam.Settings.exe`. Fresh install? Grab the whole zip.
+
+---
+
+## **v1.0.2 - 02/03/2026**
+Bugfix release for games whose schemas speak in words, not numbers.
+
+**Highlights**
+- 🏆 **Fixed Achievement & Stat Detection:** Some games use string type identifiers (`ACHIEVEMENTS`, `INT`, `FLOAT`, `AVGRATE`) instead of the numeric constants, which made stats and achievements silently fail to generate. Both numeric and string identifiers are handled now.
+
+**Technical Details**
+- `stats_schema_achievement_gen/achievements_gen.py`: `stat['type'] == STAT_TYPE_BITS` now also matches `'ACHIEVEMENTS'`; same treatment for `INT` / `FLOAT` / `AVGRATE`.
+
+**Thanks**
+- **[EndzE](https://github.com/Detanup01/gbe_fork_tools/issues/9#issuecomment-3795927921)** — for identifying the string-identifier fix.
+
+**Notes**
+- Updating? Just replace `ARMGDDN.Steam.Settings.exe`. Fresh install? Grab the whole zip.
 
 ---
 
