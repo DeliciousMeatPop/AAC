@@ -131,6 +131,8 @@ The Steam Settings generator connects to Steam **anonymously** (no account, no p
 
 No login is required. (Real-account login isn't used on purpose: Steam's newer auth system rejects the library's old password login with a false "invalid password" error and then loops asking for the password. Anonymous sidesteps all of that, and the top-owner list means you don't lose achievement coverage.)
 
+**Want it faster?** Drop your own SteamID64 into `Resources/Tools/my_steam_ids.txt` (one per line). Those IDs are tried **first**, so if you own the game it's an instant hit instead of walking the whole list — and it stops the moment an owner returns the game's data. Just set your Steam profile's **Game details** privacy to *Public* so Steam will hand over the schema for your account.
+
 ### 📁 GBE-Fork Format Steam Settings
 
 `ARMGDDN.Steam.Settings` generates proper GBE-Fork format configs:
@@ -336,6 +338,7 @@ ARMGDDN.Autocracker/
         ├── nircmd.exe                                 # For talking and cool stuff
         ├── options.txt                                # Your saved user preferences
         ├── top_owners_ids.txt                         # ~250 owner IDs for schema lookups
+        ├── my_steam_ids.txt                           # your own IDs (tried first) - optional speed-up
         ├── rcedit-x64.exe                             # For applying icons to EXEs
         └── windowsdesktop-runtime-10.0.1-win-x64.exe  # .NET runtime (auto-installed)
 ```

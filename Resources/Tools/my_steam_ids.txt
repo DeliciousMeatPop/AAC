@@ -1,0 +1,13 @@
+# Put your own SteamID64 here (one per line) to speed up steam_settings generation.
+#
+# These IDs are tried FIRST when looking up a game's achievements/stats. If your
+# account owns the game, it's an instant hit -- the generator stops as soon as one
+# owner returns the game's data, instead of walking the ~250 bundled top-owner list.
+#
+# Requirements:
+#   - Use your SteamID64: the 17-digit number, e.g. 76561198000000000
+#     (find it at steamdb.info/calculator or steamid.io).
+#   - Set your Steam profile "Game details" privacy to PUBLIC, otherwise Steam
+#     won't hand out the schema for your account and it'll just fall through.
+#
+# Lines starting with # are ignored. Add your ID below:

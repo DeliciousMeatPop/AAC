@@ -207,22 +207,42 @@ def prompt_user_options():
     return options
 
 
-def load_bundled_owner_ids():
-    """Load the bundled ~250 top-owner Steam IDs, always including the small
-    builtin fallback list in case the file is missing."""
+def _read_owner_id_file(path):
+    """Read Steam64 IDs (one per line) from a file, skipping blanks/#comments."""
     ids = []
     try:
-        with open(TOP_OWNERS_FILE, 'r', encoding='utf-8') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
-                if line:
-                    try:
-                        ids.append(int(line))
-                    except ValueError:
-                        pass
+                if not line or line.startswith('#'):
+                    continue
+                try:
+                    ids.append(int(line))
+                except ValueError:
+                    pass
     except OSError:
+        pass
+    return ids
+
+
+def load_bundled_owner_ids():
+    """Owner Steam IDs to query for game schemas, in priority order:
+      1. your own IDs from Tools/my_steam_ids.txt (tried FIRST -- if you own
+         the game it's an instant hit, and this file survives updates to the
+         bundled list). Your Steam profile 'Game details' must be Public.
+      2. the bundled ~250 top-owner list (Tools/top_owners_ids.txt)
+      3. the small builtin fallback list
+    Duplicates are dropped, keeping the first (highest-priority) occurrence."""
+    my_ids_file = os.path.join(BASE_PATH, "Tools", "my_steam_ids.txt")
+    my_ids = _read_owner_id_file(my_ids_file)
+    bundled = _read_owner_id_file(TOP_OWNERS_FILE)
+    if not bundled:
         print("Note: top_owners_ids.txt not found, using builtin fallback IDs.")
-    for sid in HARDCODED_STEAM_IDS:
+    if my_ids:
+        print(f"Trying your {len(my_ids)} personal Steam ID(s) first.")
+
+    ids = []
+    for sid in my_ids + bundled + HARDCODED_STEAM_IDS:
         if sid not in ids:
             ids.append(sid)
     return ids
