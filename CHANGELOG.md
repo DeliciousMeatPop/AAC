@@ -24,6 +24,12 @@ Achievements are back, the tool checks itself for updates, and the whole thing i
 
 ---
 
+## **v1.0.2 - v1.0.4**
+Various fixes when steam broke shit. Not worth listing.
+
+
+---
+
 ## **v1.0.1 - 12/18/2025**
 Cold Client Loader just got a serious glow-up. Now it's not just functional — it's *pretty*.
 
