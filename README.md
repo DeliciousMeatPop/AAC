@@ -127,16 +127,15 @@ ask=0
 
 ### 🏆 Reliable Achievements & Stats
 
-The Steam Settings generator logs into Steam with an account and pulls each game's achievement/stat schema by asking one of ~250 bundled "top owner" accounts that own huge libraries (`Resources/Tools/top_owners_ids.txt`). That combo is what lets even niche games return their achievements instead of coming back empty — a big improvement over the old anonymous + tiny-list approach.
+The Steam Settings generator connects to Steam **anonymously** (no account, no password) and pulls each game's achievement/stat schema by asking one of ~250 bundled "top owner" accounts that own huge libraries (`Resources/Tools/top_owners_ids.txt`). That big owner pool is what lets even niche games return their achievements instead of coming back empty — the old build only checked a tiny 20-account list, so anything those accounts didn't own generated nothing.
 
-**If the bundled account ever gets rate-limited** (it's shared, it happens), you can drop your own credentials in without recompiling anything. Create `Resources/Tools/steam_account.txt`:
+No login is required. (Real-account login isn't used on purpose: Steam's newer auth system rejects the library's old password login with a false "invalid password" error and then loops asking for the password. Anonymous sidesteps all of that, and the top-owner list means you don't lose achievement coverage.)
 
-```ini
-username=YourSteamLogin
-password=YourSteamPassword
-```
+**Best option — use a Steam Web API key.** Drop a free key into `Resources/Tools/steam_webapi_key.txt` and the generator pulls each game's schema **directly by AppID** from Steam's Web API (`GetSchemaForGame`) instead of hunting for an owner. This is owner-independent and reliable — it fixes niche games the top-owner scan can't find, and it's fast. Grab a key (30 seconds) at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). If a key is present it's used first, with the owner scan as fallback.
 
-The generator caches a login token after the first successful sign-in, so it's silent afterward.
+> **First run:** the very first time you generate a `steam_settings` folder, the tool walks you through adding the Web API key (and, optionally, your SteamID64) with instructions. Skip either and it tells you exactly which file to drop it in later — and it won't nag you again.
+
+**Faster owner scan (no key):** drop your own SteamID64 into `Resources/Tools/my_steam_ids.txt` (one per line). Those IDs are tried **first**, so if you own *and have played* the game it can be an instant hit. Note the owner scan can still miss a game if no queryable account has generated stats for it — which is exactly what the Web API key avoids.
 
 ### 📁 GBE-Fork Format Steam Settings
 
@@ -343,7 +342,8 @@ ARMGDDN.Autocracker/
         ├── nircmd.exe                                 # For talking and cool stuff
         ├── options.txt                                # Your saved user preferences
         ├── top_owners_ids.txt                         # ~250 owner IDs for schema lookups
-        ├── steam_account.txt                          # Optional: your own Steam login (see above)
+        ├── my_steam_ids.txt                           # your own IDs (tried first) - optional speed-up
+        ├── steam_webapi_key.txt                       # optional Steam Web API key - most reliable schema fetch
         ├── rcedit-x64.exe                             # For applying icons to EXEs
         └── windowsdesktop-runtime-10.0.1-win-x64.exe  # .NET runtime (auto-installed)
 ```

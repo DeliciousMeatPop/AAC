@@ -1,0 +1,17 @@
+# Steam Web API key (optional but recommended).
+#
+# With a key, the Steam Settings generator pulls a game's achievements/stats
+# schema DIRECTLY by AppID from Steam's Web API (GetSchemaForGame). That works
+# for ANY game regardless of who owns it -- no waiting on the top-owner scan,
+# and it fixes niche games that the owner scan can't find.
+#
+# How to get one (free, ~30 seconds):
+#   1. Go to https://steamcommunity.com/dev/apikey  (sign in)
+#   2. Enter any domain name (e.g. localhost) and agree
+#   3. Copy the key it gives you
+#
+# Paste ONLY the key on its own line below (lines starting with # are ignored).
+# Keep it private -- don't share or commit this file with your key in it.
+#
+# Example:
+# 1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D
