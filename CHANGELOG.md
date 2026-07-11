@@ -18,10 +18,52 @@ Achievements are back, the tool checks itself for updates, and the whole thing i
 - Steam Settings: restored a resilient account login with a `cli_login` fallback for Steam's newer auth flow; replaced the 20-ID hardcoded owner list with a bundled `top_owners_ids.txt` (~250 IDs, still merged with the online list).
 - Dropped the per-run ~16 MB `steam_app_dict.json` download and the whitelist gate entirely; the game name now comes from Steam's product info, which was already being fetched.
 - Removed dead code (unused inventory helpers and stale imports).
-- Context menu now targets a single install folder via `%~dp0` instead of the old "one level up" dual-version detection.
+- Context menu rebuilt as a single-folder installer that locates its own install directory at runtime, so it works both as the raw `.bat` and as the compiled `.exe` (which can unpack to a temp dir where `%~dp0` is useless).
+- Installer and uninstaller reworked to compile cleanly — no more "was unexpected at this time" crashes from batch-parser quirks (stray parentheses, multi-line `for` lists, subroutines).
 
 **Notes**
 - Coming from an older build? Just run the installer again — it cleans up the old menus for you. Or run the uninstaller for a totally clean slate.
+
+---
+
+## **v1.0.4 - 06/28/2026**
+Housekeeping after the OG version got archived.
+
+**Highlights**
+- 📍 **New Home for the Data:** Archiving the OG-GSE repo stopped the automated workflow both versions shared, so it moved here — and the App ID and Steam Settings components were repointed to the new location.
+
+**Notes**
+- Updating from v1.0.x? Just replace `ARMGDDN.App.ID.exe` and `ARMGDDN.Steam.Settings.exe`. Fresh install? Grab the whole zip.
+
+---
+
+## **v1.0.3 - 06/28/2026**
+Steam changed something on their end and broke logins. Patched, and faster too.
+
+**Highlights**
+- 🔓 **Login Fix:** The Steam Settings tool was throwing a bogus "bad login info" error that wasn't even true. It now connects anonymously with a fallback instead of hard-failing. *(Note: v1.0.5 later moved back to account login — anonymous couldn't see achievements for games no top-owner account owned.)*
+- ⚡ **Faster steam_settings:** Folder creation was taking forever — refactored for speed.
+- 🏆 **String-Type Schemas:** Carries the v1.0.2 achievement/stat fix for games that use string type identifiers.
+
+**Notes**
+- Updating? Just replace `ARMGDDN.Steam.Settings.exe`. Fresh install? Grab the whole zip.
+
+---
+
+## **v1.0.2 - 02/03/2026**
+Bugfix release for games whose schemas speak in words, not numbers.
+
+**Highlights**
+- 🏆 **Fixed Achievement & Stat Detection:** Some games use string type identifiers (`ACHIEVEMENTS`, `INT`, `FLOAT`, `AVGRATE`) instead of the numeric constants, which made stats and achievements silently fail to generate. Both numeric and string identifiers are handled now.
+
+**Technical Details**
+- `stats_schema_achievement_gen/achievements_gen.py`: `stat['type'] == STAT_TYPE_BITS` now also matches `'ACHIEVEMENTS'`; same treatment for `INT` / `FLOAT` / `AVGRATE`.
+
+**Thanks**
+- **[EndzE](https://github.com/Detanup01/gbe_fork_tools/issues/9#issuecomment-3795927921)** — for identifying the string-identifier fix.
+
+**Notes**
+- Updating? Just replace `ARMGDDN.Steam.Settings.exe`. Fresh install? Grab the whole zip.
 
 ---
 
