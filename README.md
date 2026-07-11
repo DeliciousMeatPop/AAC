@@ -1,6 +1,7 @@
 # ARMGDDN Autocracker 🎮🔧🔥
 
-![ARMGDDN Autocracker Logo](https://github.com/KaladinDMP/ARMGDDN-Autocracker/assets/92135051/ebcf7a21-8e5d-44e2-9165-cb280d8d275c)
+<img width="872" height="512" alt="image" src="https://github.com/user-attachments/assets/2f024aae-3bcb-4858-9430-a4cb1d213bd1" />
+)
 
 **Right-click, crack, play. Now powered by [GBE Fork](https://github.com/Detanup01/gbe_fork).**
 
@@ -112,10 +113,10 @@ The first time you generate steam settings, you'll be asked:
 
 Your preferences are saved to `Resources/Tools/options.txt` and remembered forever. Or until you delete it. Whichever comes first.
 
-**Don't want to be asked every time?** When prompted, say "Y" to "Stop asking every time?" and it'll save `ask=0` to your options. From then on, it just uses your saved settings silently. Change your mind? Edit `options.txt` and set `ask=1` to re-enable prompts.
+**Don't want to be asked every time?** Navigate to `Resources/Tools/options.txt` and change `ask=1` to `ask=0`and save it. From then on, it just uses your saved settings silently. Change your mind? Edit `options.txt` and re-set to `ask=1` to re-enable prompts.
 
 ```ini
-# Example options.txt
+# Example options.txt, you can add these but it starts only with `ask=1`
 account_name=YourCoolName
 portable=0
 local_save_path=saves
@@ -131,7 +132,7 @@ The Steam Settings generator connects to Steam **anonymously** (no account, no p
 
 No login is required. (Real-account login isn't used on purpose: Steam's newer auth system rejects the library's old password login with a false "invalid password" error and then loops asking for the password. Anonymous sidesteps all of that, and the top-owner list means you don't lose achievement coverage.)
 
-**Best option — use a Steam Web API key.** Drop a free key into `Resources/Tools/steam_webapi_key.txt` and the generator pulls each game's schema **directly by AppID** from Steam's Web API (`GetSchemaForGame`) instead of hunting for an owner. This is owner-independent and reliable — it fixes niche games the top-owner scan can't find, and it's fast. Grab a key (30 seconds) at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). If a key is present it's used first, with the owner scan as fallback.
+**Best option — use a Steam Web API key.** Drop a free key into `Resources/Tools/steam_webapi_key.txt` and the generator pulls each game's schema **directly by AppID** from Steam's Web API (`GetSchemaForGame`) instead of hunting for an owner. This is owner-independent and reliable — it fixes niche games the top-owner scan can't find, and it's **fast**. Like 1000% faster than without. Grab a key (30 seconds) at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). If a key is present it's used first, with the owner scan as fallback.
 
 > **First run:** the very first time you generate a `steam_settings` folder, the tool walks you through adding the Web API key (and, optionally, your SteamID64) with instructions. Skip either and it tells you exactly which file to drop it in later — and it won't nag you again.
 
@@ -257,7 +258,7 @@ Steamless integration, same as always. If a game has a Steam stub protecting it,
 
 **Note:** The installer automatically installs .NET Desktop Runtime 10.x if needed. If you already have it, it skips in about 1-2 seconds. No user interaction required - it's completely silent.
 
-### Option 2: Drag and Drop (The Lazy Way)
+### Option 2: Drag and Drop (The Long Way)
 
 1. Grab your EXE or `steam_api.dll` / `steam_api64.dll`
 2. Yeet it onto `ARMGDDN.Main.exe`
