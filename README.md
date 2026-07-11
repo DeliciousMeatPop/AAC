@@ -131,6 +131,10 @@ The Steam Settings generator connects to Steam **anonymously** (no account, no p
 
 No login is required. (Real-account login isn't used on purpose: Steam's newer auth system rejects the library's old password login with a false "invalid password" error and then loops asking for the password. Anonymous sidesteps all of that, and the top-owner list means you don't lose achievement coverage.)
 
+**Best option — use a Steam Web API key.** Drop a free key into `Resources/Tools/steam_webapi_key.txt` and the generator pulls each game's schema **directly by AppID** from Steam's Web API (`GetSchemaForGame`) instead of hunting for an owner. This is owner-independent and reliable — it fixes niche games the top-owner scan can't find, and it's fast. Grab a key (30 seconds) at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey). If a key is present it's used first, with the owner scan as fallback.
+
+**Faster owner scan (no key):** drop your own SteamID64 into `Resources/Tools/my_steam_ids.txt` (one per line). Those IDs are tried **first**, so if you own *and have played* the game it can be an instant hit. Note the owner scan can still miss a game if no queryable account has generated stats for it — which is exactly what the Web API key avoids.
+
 ### 📁 GBE-Fork Format Steam Settings
 
 `ARMGDDN.Steam.Settings` generates proper GBE-Fork format configs:
@@ -336,6 +340,8 @@ ARMGDDN.Autocracker/
         ├── nircmd.exe                                 # For talking and cool stuff
         ├── options.txt                                # Your saved user preferences
         ├── top_owners_ids.txt                         # ~250 owner IDs for schema lookups
+        ├── my_steam_ids.txt                           # your own IDs (tried first) - optional speed-up
+        ├── steam_webapi_key.txt                       # optional Steam Web API key - most reliable schema fetch
         ├── rcedit-x64.exe                             # For applying icons to EXEs
         └── windowsdesktop-runtime-10.0.1-win-x64.exe  # .NET runtime (auto-installed)
 ```

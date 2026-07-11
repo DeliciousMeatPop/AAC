@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import urllib.request
 import urllib.error
 import threading
@@ -207,22 +208,42 @@ def prompt_user_options():
     return options
 
 
-def load_bundled_owner_ids():
-    """Load the bundled ~250 top-owner Steam IDs, always including the small
-    builtin fallback list in case the file is missing."""
+def _read_owner_id_file(path):
+    """Read Steam64 IDs (one per line) from a file, skipping blanks/#comments."""
     ids = []
     try:
-        with open(TOP_OWNERS_FILE, 'r', encoding='utf-8') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
-                if line:
-                    try:
-                        ids.append(int(line))
-                    except ValueError:
-                        pass
+                if not line or line.startswith('#'):
+                    continue
+                try:
+                    ids.append(int(line))
+                except ValueError:
+                    pass
     except OSError:
+        pass
+    return ids
+
+
+def load_bundled_owner_ids():
+    """Owner Steam IDs to query for game schemas, in priority order:
+      1. your own IDs from Tools/my_steam_ids.txt (tried FIRST -- if you own
+         the game it's an instant hit, and this file survives updates to the
+         bundled list). Your Steam profile 'Game details' must be Public.
+      2. the bundled ~250 top-owner list (Tools/top_owners_ids.txt)
+      3. the small builtin fallback list
+    Duplicates are dropped, keeping the first (highest-priority) occurrence."""
+    my_ids_file = os.path.join(BASE_PATH, "Tools", "my_steam_ids.txt")
+    my_ids = _read_owner_id_file(my_ids_file)
+    bundled = _read_owner_id_file(TOP_OWNERS_FILE)
+    if not bundled:
         print("Note: top_owners_ids.txt not found, using builtin fallback IDs.")
-    for sid in HARDCODED_STEAM_IDS:
+    if my_ids:
+        print(f"Trying your {len(my_ids)} personal Steam ID(s) first.")
+
+    ids = []
+    for sid in my_ids + bundled + HARDCODED_STEAM_IDS:
         if sid not in ids:
             ids.append(sid)
     return ids
@@ -361,10 +382,140 @@ def download_achievement_images(game_id, image_names, output_folder):
     q.join()
 
 
+def load_webapi_key():
+    """Steam Web API key, from the STEAM_WEBAPI_KEY env var or
+    Resources/Tools/steam_webapi_key.txt. With a key we can pull a game's
+    achievement schema straight from Steam by AppID (GetSchemaForGame), with
+    no dependence on any owner account -- the reliable path for niche games.
+    Get a free key at https://steamcommunity.com/dev/apikey ."""
+    key = os.environ.get("STEAM_WEBAPI_KEY", "").strip()
+    if key:
+        return key
+    key_file = os.path.join(BASE_PATH, "Tools", "steam_webapi_key.txt")
+    try:
+        with open(key_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    return line
+    except OSError:
+        pass
+    return ""
+
+
+def _download_icon_urls(url_map, output_folder):
+    """url_map: {filename: full_url}. Download each to output_folder/filename."""
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    q = queue.Queue()
+
+    def worker():
+        while True:
+            item = q.get()
+            if item is None:
+                q.task_done()
+                return
+            fname, url = item
+            try:
+                with urllib.request.urlopen(url, timeout=15) as resp:
+                    with open(os.path.join(output_folder, fname), "wb") as f:
+                        f.write(resp.read())
+            except Exception as e:
+                print(f"Error downloading {fname}: {e}")
+            q.task_done()
+
+    threads = [threading.Thread(target=worker, daemon=True) for _ in range(20)]
+    for t in threads:
+        t.start()
+    for fname, url in url_map.items():
+        q.put((fname, url))
+    q.join()
+    for _ in threads:
+        q.put(None)
+    q.join()
+
+
+def generate_from_webapi(game_id, api_key, output_directory):
+    """Fetch the achievement/stat schema straight from Steam's Web API
+    (ISteamUserStats/GetSchemaForGame). Owner-independent: works for any game
+    by AppID. Writes achievements.json / stats.json (GBE format) and downloads
+    the icons. Returns the achievements list, or None on failure / no data."""
+    url = ("https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/"
+           "?key={}&appid={}&l=english".format(api_key, game_id))
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        if e.code == 403:
+            print("Web API key was rejected (403). Check Resources/Tools/steam_webapi_key.txt.")
+        else:
+            print(f"Web API error {e.code} fetching schema for {game_id}.")
+        return None
+    except Exception as e:
+        print(f"Web API request failed: {e}")
+        return None
+
+    stats_block = data.get("game", {}).get("availableGameStats", {}) or {}
+    ach_in = stats_block.get("achievements", []) or []
+    stats_in = stats_block.get("stats", []) or []
+    if not ach_in and not stats_in:
+        return None
+
+    achievements_out = []
+    icon_urls = {}
+    for a in ach_in:
+        entry = {
+            "name": a.get("name", ""),
+            "hidden": str(a.get("hidden", 0)),
+            "displayName": a.get("displayName", ""),
+            "description": a.get("description", ""),
+        }
+        for src_key, dst_key in (("icon", "icon"), ("icongray", "icon_gray")):
+            u = a.get(src_key)
+            if u:
+                fname = u.rstrip("/").split("/")[-1]
+                icon_urls[fname] = u
+                entry[dst_key] = "images/" + fname
+        achievements_out.append(entry)
+
+    stats_out = []
+    for s in stats_in:
+        dv = s.get("defaultvalue", 0)
+        stats_out.append({
+            "name": s.get("name", ""),
+            "type": "int",
+            "default": str(int(dv)) if isinstance(dv, (int, float)) else "0",
+            "global": "0",
+        })
+
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    with open(os.path.join(output_directory, "achievements.json"), 'w', encoding='utf-8') as f:
+        f.write(json.dumps(achievements_out, indent=4))
+    if stats_out:
+        with open(os.path.join(output_directory, "stats.json"), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(stats_out, indent=2))
+
+    if icon_urls:
+        print(f"Downloading {len(icon_urls)} achievement icons...")
+        _download_icon_urls(icon_urls, os.path.join(output_directory, "images"))
+
+    print(f"Web API: got {len(achievements_out)} achievements and {len(stats_out)} stats.")
+    return achievements_out
+
+
 def generate_achievement_stats(client, game_id, output_directory):
+    # Preferred path: Steam Web API (owner-independent, fast, reliable) when a
+    # key is configured. Falls back to the top-owner client scan otherwise.
+    api_key = load_webapi_key()
+    if api_key:
+        if generate_from_webapi(game_id, api_key, output_directory):
+            return True
+        print("Web API returned no schema; falling back to the top-owner scan...")
+
     images_dir = os.path.join(output_directory, "images")
     images_to_download = []
-    
+
     if not TOP_OWNER_IDS:
         print("Warning: No Steam IDs available. Skipping achievement stats generation.")
         return False
