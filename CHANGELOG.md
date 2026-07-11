@@ -1,6 +1,28 @@
-# ARMGDDN Autocracker - GBE Fork Edition Changelog
+# ARMGDDN Autocracker Changelog
 
-Welcome to the ARMGDDN Autocracker GBE Fork Changelog! This is the cooler, more modern sibling of the OG GSE version. Same chaos, better emulation, more features. Let's see what trouble we've gotten ourselves into!
+Welcome to the ARMGDDN Autocracker Changelog! Same chaos, better emulation, more features. Let's see what trouble we've gotten ourselves into!
+
+## **v1.0.5 - 07/10/2026**
+Achievements are back, the tool checks itself for updates, and the whole thing is now just *one* ARMGDDN Autocracker instead of the old OG/GBE split. Spring cleaning, in July.
+
+**Highlights**
+- 🏆 **Achievements Actually Work Again:** The Steam Settings generator logs in with an account again. The switch to anonymous login could only see games owned by a tiny hardcoded list, so niche titles (looking at you, StarMiner) came back with nothing. It now pulls achievement/stat schemas against a bundled list of ~250 top-owner accounts, so things generate reliably instead of silently skipping.
+- 🔑 **Bring-Your-Own-Account:** If the shared achievement account ever gets rate-limited, drop a `Resources/Tools/steam_account.txt` with `username=` / `password=` and it'll use that instead — no recompiling. It caches a login token so later runs stay silent.
+- 🔔 **Daily Update Check:** `ARMGDDN.Main` quietly checks GitHub for a newer release once every 24 hours and tells you if one's out. No spam, no phoning home more than once a day.
+- 🧹 **One Brand, Cleaner Menus:** No more separate OG-GSE / GBE-Fork editions or nested version submenus — just a single **ARMGDDN Autocracker** menu. EXEs get Autocracker / Cold Client / Steam Stub Remover / VD Batmaker; DLLs get Autocracker / Steam Interfaces; folders get AAC Folder Exclude.
+- 🔧 **Self-Repairing Installer:** Re-running the context-menu installer now wipes any old or broken entries first (including the retired OG/GBE nested menus and every legacy flat entry) before rebuilding, so a re-install *fixes* a busted setup. The uninstaller still nukes everything.
+- 🏷️ **x86 Loader Naming:** The 32-bit Cold Client loader is `steamclient_loader_x86.exe` now, and the renamed output matches as `ExeNameCCLx86.exe` (64-bit unchanged).
+
+**Technical Details**
+- Steam Settings: restored a resilient account login with a `cli_login` fallback for Steam's newer auth flow; replaced the 20-ID hardcoded owner list with a bundled `top_owners_ids.txt` (~250 IDs, still merged with the online list).
+- Dropped the per-run ~16 MB `steam_app_dict.json` download and the whitelist gate entirely; the game name now comes from Steam's product info, which was already being fetched.
+- Removed dead code (unused inventory helpers and stale imports).
+- Context menu now targets a single install folder via `%~dp0` instead of the old "one level up" dual-version detection.
+
+**Notes**
+- Coming from an older build? Just run the installer again — it cleans up the old menus for you. Or run the uninstaller for a totally clean slate.
+
+---
 
 ## **v1.0.1 - 12/18/2025**
 Cold Client Loader just got a serious glow-up. Now it's not just functional — it's *pretty*.

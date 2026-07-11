@@ -19,7 +19,7 @@ If you used the ancient Goldberg-based version, the generated files changed. For
 | DLC config | `DLC.txt` | `configs.app.ini` |
 | User settings | Scattered text files | `configs.user.ini` |
 | Overlay support | Yes! (ExOL builds, optional) | Yes! (ExOL builds, optional) |
-| Cold Client Loader | `steamclient_loader.exe` | `ExeNameCCLx32.exe` / `ExeNameCCLx64.exe` |
+| Cold Client Loader | `steamclient_loader.exe` | `ExeNameCCLx86.exe` / `ExeNameCCLx64.exe` |
 | Active development | Archived | Actively maintained |
 
 **TL;DR:** GBE Fork is the spiritual successor to Goldberg's emulator, with more features, better compatibility, and someone actually fixing bugs. Revolutionary concept, I know.
@@ -192,7 +192,7 @@ Notification_Duration_Achievement=7.0  # How long popups stay
 For those stubborn games that refuse to play nice:
 
 - **Auto-detects 32-bit vs 64-bit** - Reads the EXE header and picks the right loader automatically
-- **Smart Loader Renaming** - Renames the loader to `ExeNameCCLx64.exe` or `ExeNameCCLx32.exe` so you know what it's for
+- **Smart Loader Renaming** - Renames the loader to `ExeNameCCLx64.exe` or `ExeNameCCLx86.exe` so you know what it's for
 - **Game Icon Extraction** - Extracts the icon from your game EXE and applies it to the loader. Your game library stays pretty!
 - Includes `steamclient.dll`, `steamclient64.dll`
 - GameOverlayRenderer DLLs for that authentic fake-Steam experience
