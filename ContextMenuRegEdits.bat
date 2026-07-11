@@ -105,15 +105,7 @@ if exist "%dotnetInstaller%" (
     echo This may take a moment...
     if defined haveNircmd "%nircmdPath%" speak text "Installing dot net runtime. Please wait."
     "%dotnetInstaller%" /quiet /norestart
-    if !errorlevel! EQU 0 (
-        echo .NET Desktop Runtime installed successfully.
-    ) else if !errorlevel! EQU 1638 (
-        echo .NET Desktop Runtime already installed.
-    ) else if !errorlevel! EQU 3010 (
-        echo .NET Desktop Runtime installed. Restart may be required.
-    ) else (
-        echo .NET Desktop Runtime installer returned code: !errorlevel!
-    )
+    echo Done.
     echo.
 )
 
@@ -123,17 +115,18 @@ if exist "%dotnetInstaller%" (
 ::  so a re-install refreshes/repairs a stale setup.
 :: -------------------------------------------------------
 echo Cleaning up any previous / outdated menu entries...
-call :cleanup_menus
+for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\ARMGDDNAutocracker" /f >nul 2>&1
+for %%V in ("01_GBE" "02_OG" "01_OG" "02_GBE" "GBE Fork" "OG GSE") do for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\ARMGDDNAutocracker\shell\%%~V" /f >nul 2>&1
+for %%K in ("AutoCracker" "ColdClient" "Remove Steam Stub" "VD bat" "ARMGDDN Autocracker" "ARMGDDN Cold Client" "ARMGDDN Steam Stub Remover" "ARMGDDN VD Batmaker" "SteamInterfaces" "Steam Interfaces" "ARMGDDN_Autocracker" "ARMGDDN-Autocracker" "Autocracker") do for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\%%~K" /f >nul 2>&1
+reg delete "HKCR\Directory\shell\AACFolderExclude" /f >nul 2>&1
 echo.
 
 :: -------------------------------------------------------
 ::  PARENT MENUS FOR EXE / DLL
 :: -------------------------------------------------------
-for %%T in (exefile dllfile) do (
-    reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "MUIVerb" /t REG_SZ /d "ARMGDDN Autocracker" /f
-    reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "Icon"   /t REG_SZ /d "%aacIcon%" /f
-    reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "SubCommands" /t REG_SZ /d "" /f
-)
+for %%T in (exefile dllfile) do reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "MUIVerb" /t REG_SZ /d "ARMGDDN Autocracker" /f
+for %%T in (exefile dllfile) do reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "Icon" /t REG_SZ /d "%aacIcon%" /f
+for %%T in (exefile dllfile) do reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "SubCommands" /t REG_SZ /d "" /f
 
 :: -------------------------------------------------------
 ::  EXE SUBMENU: Autocracker / Cold Client / Stub / VD Bat
@@ -170,13 +163,11 @@ if defined haveNircmd "%nircmdPath%" speak text "Added executable and DLL contex
 :: -------------------------------------------------------
 ::  AAC FOLDER EXCLUDE - DIRECTORY MENU (standalone)
 :: -------------------------------------------------------
-if exist "%excludeExe%" (
-    echo Adding Defender Exclusion context menu...
-    reg add "HKCR\Directory\shell\AACFolderExclude" /v "MUIVerb" /t REG_SZ /d "AAC Folder Exclude" /f
-    reg add "HKCR\Directory\shell\AACFolderExclude" /v "Icon" /t REG_SZ /d "%excludeExe%,0" /f
-    reg add "HKCR\Directory\shell\AACFolderExclude\command" /ve /d "\"%excludeExe%\" \"%%1\"" /f
-    if defined haveNircmd "%nircmdPath%" speak text "Added Defender folder exclusion context menu."
-)
+if exist "%excludeExe%" echo Adding Defender Exclusion context menu...
+if exist "%excludeExe%" reg add "HKCR\Directory\shell\AACFolderExclude" /v "MUIVerb" /t REG_SZ /d "AAC Folder Exclude" /f
+if exist "%excludeExe%" reg add "HKCR\Directory\shell\AACFolderExclude" /v "Icon" /t REG_SZ /d "%excludeExe%,0" /f
+if exist "%excludeExe%" reg add "HKCR\Directory\shell\AACFolderExclude\command" /ve /d "\"%excludeExe%\" \"%%1\"" /f
+if exist "%excludeExe%" if defined haveNircmd "%nircmdPath%" speak text "Added Defender folder exclusion context menu."
 
 echo.
 echo ============================================
@@ -184,54 +175,13 @@ echo   Context Menu Installation Complete!
 echo ============================================
 echo.
 echo   ARMGDDN Autocracker
-echo     (EXE)  Autocracker / Cold Client / Steam Stub Remover / VD Batmaker
-echo     (DLL)  Autocracker / Steam Interfaces
+echo     EXE:  Autocracker / Cold Client / Steam Stub Remover / VD Batmaker
+echo     DLL:  Autocracker / Steam Interfaces
 echo.
-echo   AAC Folder Exclude (right-click any folder)
+echo   AAC Folder Exclude - right-click any folder
 echo.
 if defined haveNircmd "%nircmdPath%" speak text "All context menu options added successfully. Enjoy."
 pause
 
 endlocal
 exit /b
-
-:: =======================================================
-::  :cleanup_menus
-::  Erases ALL current + legacy ARMGDDN menu entries.
-::  Same coverage as RemoveContextMenu.bat, used here so
-::  installing over an old/broken setup repairs it.
-:: =======================================================
-:cleanup_menus
-:: current + retired nested master keys (also drops OG/GBE subtrees)
-for %%T in (exefile dllfile Directory) do (
-    reg delete "HKCR\%%T\shell\ARMGDDNAutocracker" /f >nul 2>&1
-)
-:: retired version subkeys, in case only a parent lingered
-for %%V in ("01_GBE" "02_OG" "01_OG" "02_GBE" "GBE Fork" "OG GSE") do (
-    for %%T in (exefile dllfile Directory) do (
-        reg delete "HKCR\%%T\shell\ARMGDDNAutocracker\shell\%%~V" /f >nul 2>&1
-    )
-)
-:: legacy flat entries (v1.x - v2.x) and every old name variant
-for %%K in (
-    "AutoCracker"
-    "ColdClient"
-    "Remove Steam Stub"
-    "VD bat"
-    "ARMGDDN Autocracker"
-    "ARMGDDN Cold Client"
-    "ARMGDDN Steam Stub Remover"
-    "ARMGDDN VD Batmaker"
-    "SteamInterfaces"
-    "Steam Interfaces"
-    "ARMGDDN_Autocracker"
-    "ARMGDDN-Autocracker"
-    "Autocracker"
-) do (
-    for %%T in (exefile dllfile Directory) do (
-        reg delete "HKCR\%%T\shell\%%~K" /f >nul 2>&1
-    )
-)
-:: old standalone folder-exclude (re-added afterwards)
-reg delete "HKCR\Directory\shell\AACFolderExclude" /f >nul 2>&1
-goto :eof
