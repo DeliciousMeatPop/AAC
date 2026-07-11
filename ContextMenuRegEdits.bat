@@ -6,8 +6,10 @@ setlocal EnableDelayedExpansion
 :: -------------------------------------------------------
 ::  Single-version setup. There is no separate OG-GSE or
 ::  GBE-Fork edition any more, just ARMGDDN Autocracker.
-::  This script lives in the install folder itself, so all
-::  paths are relative to %~dp0 (no "one level up" logic).
+::  It figures out its own install folder (the one that holds
+::  ARMGDDN.Main.exe) at runtime, so it works whether it's run
+::  as this .bat or as the compiled .exe (which can unpack to
+::  a temp dir, making %~dp0 useless on its own).
 ::
 ::  On install it first ERASES any previous menu entries
 ::  -- including the retired OG-GSE / GBE-Fork nested menus
@@ -15,31 +17,58 @@ setlocal EnableDelayedExpansion
 ::  broken or outdated setup, then adds the current menus.
 :: =======================================================
 
-set "installDir=%~dp0"
-if "%installDir:~-1%"=="\" set "installDir=%installDir:~0,-1%"
+:: -------------------------------------------------------
+::  LOCATE THE INSTALL FOLDER (the one holding ARMGDDN.Main.exe)
+::  IMPORTANT: when this .bat is compiled to an .exe, the exe usually
+::  unpacks the script to a TEMP folder, so %~dp0 is NOT the install
+::  folder. Don't trust it blindly -- find the folder that actually
+::  contains ARMGDDN.Main.exe: try the script/exe dir, then the launch
+::  dir, and if both miss, just ask for it.
+:: -------------------------------------------------------
+echo Script dir: %~dp0
+echo Launch dir: %CD%
+echo.
+
+set "installDir="
+for %%D in ("%~dp0." "%CD%\.") do (
+    if not defined installDir if exist "%%~fD\ARMGDDN.Main.exe" set "installDir=%%~fD"
+)
+
+if not defined installDir (
+    echo Could not auto-detect the ARMGDDN Autocracker folder.
+    echo If this is the compiled .exe, your bat-to-exe tool is unpacking to a
+    echo temp folder -- just paste the real path to the folder below.
+    echo.
+    set /p "installDir=Full path to the folder with ARMGDDN.Main.exe: "
+)
+
+:: normalize: strip surrounding quotes, then any trailing backslash
+if defined installDir set installDir=%installDir:"=%
+if defined installDir if "%installDir:~-1%"=="\" set "installDir=%installDir:~0,-1%"
 
 set "main=%installDir%\ARMGDDN.Main.exe"
-set "mainIcon=%installDir%\ARMGDDN.Main.exe,0"
+if not exist "%main%" (
+    echo.
+    echo ERROR: ARMGDDN.Main.exe not found in:
+    echo   %installDir%
+    echo Put this installer in the ARMGDDN Autocracker folder next to
+    echo ARMGDDN.Main.exe and run it again.
+    pause
+    exit /b
+)
+
+set "mainIcon=%main%,0"
+set "aacIcon=%installDir%\Resources\Tools\AAC_Autocracker.ico"
 set "coldIcon=%installDir%\Resources\ARMGDDN.Cold.Client.exe,0"
 set "stubIcon=%installDir%\Resources\SteamlessCLI\Steamless.CLI.exe,0"
 set "vdIcon=%installDir%\Resources\ARMGDDN.VD.Batmaker.exe,0"
 set "siExe=%installDir%\Resources\Tools\generate_interfaces_file.exe"
-set "aacIcon=%installDir%\Resources\Tools\AAC_Autocracker.ico"
 set "nircmdPath=%installDir%\Resources\Tools\nircmd.exe"
 set "excludeExe=%installDir%\Resources\Tools\ExclusionHelper.exe"
 set "dotnetInstaller=%installDir%\Resources\Tools\windowsdesktop-runtime-10.0.1-win-x64.exe"
 
-echo Install dir: %installDir%
+echo Using install dir: %installDir%
 echo.
-
-:: --- the main executable is required ---
-if not exist "%main%" (
-    echo ERROR: ARMGDDN.Main.exe not found in:
-    echo   %installDir%
-    echo Run this from inside the ARMGDDN Autocracker folder.
-    pause
-    exit /b
-)
 
 :: --- nircmd is optional (the voice / intro fun) ---
 set "haveNircmd="
