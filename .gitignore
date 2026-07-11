@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+# runtime artifacts generated next to the tools
+Resources/steam_ids_cache.txt
+Resources/steam_app_dict_cache.json
+Resources/.update_check
