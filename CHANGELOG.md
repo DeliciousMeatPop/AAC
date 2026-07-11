@@ -7,6 +7,7 @@ Achievements are back, the tool checks itself for updates, and the whole thing i
 
 **Highlights**
 - 🏆 **Achievements Actually Work Again:** The Steam Settings generator logs in with an account again. The switch to anonymous login could only see games owned by a tiny hardcoded list, so niche titles (looking at you, StarMiner) came back with nothing. It now pulls achievement/stat schemas against a bundled list of ~250 top-owner accounts, so things generate reliably instead of silently skipping.
+- ⬆️ **Latest GBE Fork Core:** Updated all the bundled GBE Fork pieces — the `steam_api` / `steam_api64` DLLs (regular and ExOL), the Cold Client Loader files, and the tooling behind the `steam_settings` folder — to Detanup01's newest release (May 30, 2026). Latest emulator fixes and game compatibility, baked in.
 - 🔑 **Bring-Your-Own-Account:** If the shared achievement account ever gets rate-limited, drop a `Resources/Tools/steam_account.txt` with `username=` / `password=` and it'll use that instead — no recompiling. It caches a login token so later runs stay silent.
 - 🔔 **Daily Update Check:** `ARMGDDN.Main` quietly checks GitHub for a newer release once every 24 hours and tells you if one's out. No spam, no phoning home more than once a day.
 - 🧹 **One Brand, Cleaner Menus:** No more separate OG-GSE / GBE-Fork editions or nested version submenus — just a single **ARMGDDN Autocracker** menu. EXEs get Autocracker / Cold Client / Steam Stub Remover / VD Batmaker; DLLs get Autocracker / Steam Interfaces; folders get AAC Folder Exclude.
