@@ -474,6 +474,13 @@ def generate_from_webapi(game_id, api_key, output_directory):
             u = a.get(src_key)
             if u:
                 fname = u.rstrip("/").split("/")[-1]
+                # Some games leave an achievement icon unset. The Web API then
+                # returns a URL that ends at the app image directory with no
+                # file, e.g. ".../images/apps/1311570/", so fname collapses to
+                # the AppID. Requesting a directory makes Steam's CDN answer
+                # 403 Forbidden, so skip anything without a real filename.
+                if "." not in fname:
+                    continue
                 icon_urls[fname] = u
                 entry[dst_key] = "images/" + fname
         achievements_out.append(entry)
@@ -538,14 +545,15 @@ def generate_achievement_stats(client, game_id, output_directory):
                         print(f"Generated stats.json with {len(stats)} stats")
                     
                     for ach in achievements:
-                        if "icon" in ach:
-                            icon_name = ach["icon"].replace("images/", "")
-                            images_to_download.append(icon_name)
-                        if "icon_gray" in ach:
-                            icon_name = ach["icon_gray"].replace("images/", "")
-                            images_to_download.append(icon_name)
-                        if "icongray" in ach:
-                            icon_name = ach["icongray"].replace("images/", "")
+                        for icon_key in ("icon", "icon_gray", "icongray"):
+                            if icon_key not in ach:
+                                continue
+                            icon_name = ach[icon_key].replace("images/", "")
+                            # Skip icons the game never uploaded: an empty or
+                            # extension-less name resolves to the app image
+                            # directory, which Steam's CDN answers with 403.
+                            if "." not in icon_name:
+                                continue
                             images_to_download.append(icon_name)
                     print(f"Got achievement schema from ID #{i+1} ({len(achievements)} achievements)")
                     break
