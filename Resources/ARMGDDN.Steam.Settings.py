@@ -10,6 +10,21 @@ import queue
 _base = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(_base, 'Tools'))
 
+
+def _safe_input(prompt=""):
+    """input() that returns "" instead of crashing when stdin is unavailable.
+
+    When this tool is launched by another process (e.g. the Autocracker) the
+    child can have no attached console, and CPython's input() then raises
+    RuntimeError('lost sys.stdin') rather than EOFError. Treat both as "no
+    answer" so interactive prompts skip gracefully instead of aborting the run.
+    """
+    try:
+        return input(prompt)
+    except (EOFError, RuntimeError):
+        return ""
+
+
 HARDCODED_STEAM_IDS = [
     76561198017975643, 76561198028121353, 76561197979911851, 76561198355953202,
     76561198217186687, 76561197993544755, 76561198001237877, 76561198237402290,
@@ -121,7 +136,7 @@ def prompt_user_options():
         print(f"Save location: AppData ({options['saves_folder_name']})")
     print()
     
-    change = input("Change username or save location? (Y/N): ").strip().upper()
+    change = _safe_input("Change username or save location? (Y/N): ").strip().upper()
     
     if change != 'Y':
         print("Keeping current settings.")
@@ -138,7 +153,7 @@ def prompt_user_options():
     print("  Username")
     print("--------------------------------------------")
     print(f"Currently set to: {options['account_name']}")
-    new_username = input("Type new username or hit Enter to keep current: ").strip()
+    new_username = _safe_input("Type new username or hit Enter to keep current: ").strip()
     if new_username:
         options['account_name'] = new_username
         print(f"Username changed to: {options['account_name']}")
@@ -164,14 +179,14 @@ def prompt_user_options():
         print(f"Currently: APPDATA (folder: {options['saves_folder_name']})")
     print()
     
-    save_choice = input("Choose save location (1=Portable, 0=AppData, Enter=keep current): ").strip()
+    save_choice = _safe_input("Choose save location (1=Portable, 0=AppData, Enter=keep current): ").strip()
     
     if save_choice == '1':
         options['portable'] = '1'
         print()
         print(f"Current portable path: {options['local_save_path']}")
         print("This path is relative to the game's steam_api DLL location.")
-        new_path = input("Enter save folder name (or Enter for current): ").strip()
+        new_path = _safe_input("Enter save folder name (or Enter for current): ").strip()
         if new_path:
             options['local_save_path'] = new_path
         print(f"Portable saves will be stored in: ./{options['local_save_path']}/")
@@ -180,7 +195,7 @@ def prompt_user_options():
         options['portable'] = '0'
         print()
         print(f"Current AppData folder name: {options['saves_folder_name']}")
-        new_folder = input("Enter folder name (or Enter for 'GSE Saves'): ").strip()
+        new_folder = _safe_input("Enter folder name (or Enter for 'GSE Saves'): ").strip()
         if new_folder:
             options['saves_folder_name'] = new_folder
         else:
@@ -191,7 +206,7 @@ def prompt_user_options():
     
     print()
     print("--------------------------------------------")
-    disable_ask = input("Stop asking every time? (Y/N): ").strip().upper()
+    disable_ask = _safe_input("Stop asking every time? (Y/N): ").strip().upper()
     if disable_ask == 'Y':
         options['ask'] = '0'
         print("Got it! Will use these settings silently next time.")
@@ -1007,10 +1022,7 @@ def prompt_first_run_setup():
         print("  2. Enter any domain (e.g. localhost) and agree")
         print("  3. Copy the key it shows you")
         print()
-        try:
-            answer = input("Paste your Steam Web API key now (or press Enter to skip): ").strip()
-        except EOFError:
-            answer = ""
+        answer = _safe_input("Paste your Steam Web API key now (or press Enter to skip): ").strip()
         if answer:
             if _append_config_line(key_file, answer):
                 print("Saved! Reliable achievement fetching is now enabled.")
@@ -1024,10 +1036,7 @@ def prompt_first_run_setup():
         print("first during the fallback owner scan (a small speed-up).")
         print("Find your 17-digit SteamID64 at steamid.io or steamdb.info/calculator.")
         print()
-        try:
-            answer = input("Enter your SteamID64 now (or press Enter to skip): ").strip()
-        except EOFError:
-            answer = ""
+        answer = _safe_input("Enter your SteamID64 now (or press Enter to skip): ").strip()
         if answer.isdigit() and len(answer) >= 17:
             if _append_config_line(ids_file, answer):
                 print("Saved!")
