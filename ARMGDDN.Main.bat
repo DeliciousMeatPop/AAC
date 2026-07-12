@@ -10,7 +10,7 @@ REM   Update check (runs at most once per day)
 REM ============================================
 REM Bump CURRENT_VERSION whenever you cut a new release so users get
 REM notified. It is compared against the latest GitHub release tag.
-set "CURRENT_VERSION=v1.0.5"
+set "CURRENT_VERSION=v1.0.6"
 set "UPDATE_REPO=KaladinDMP/ARMGDDN-Autocracker"
 set "updateStamp=%~dp0Resources\.update_check"
 set "today=%DATE%"
@@ -26,9 +26,11 @@ REM Record today's date first so a failed/offline check still waits a day
 
 echo Checking for updates...
 set "latestVersion="
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "try { (Invoke-RestMethod -Uri 'https://api.github.com/repos/%UPDATE_REPO%/releases/latest' -Headers @{'User-Agent'='ARMGDDN-Autocracker'} -TimeoutSec 10).tag_name } catch { '' }"`) do set "latestVersion=%%V"
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { (Invoke-RestMethod -Uri 'https://api.github.com/repos/%UPDATE_REPO%/releases/latest' -Headers @{'User-Agent'='ARMGDDN-Autocracker'} -TimeoutSec 10).tag_name } catch { 'ERR ' + $_.Exception.Message }"`) do set "latestVersion=%%V"
 
-if not defined latestVersion goto skip_update_check
+REM Distinguish a failed check from an up-to-date result so it never silently no-ops
+if not defined latestVersion ( echo Update check skipped ^(no response from GitHub^). & echo. & goto skip_update_check )
+if /i "%latestVersion:~0,4%"=="ERR " ( echo Update check failed: %latestVersion:~4% & echo. & goto skip_update_check )
 if /i "%latestVersion%"=="%CURRENT_VERSION%" (
     echo You are on the latest version ^(%CURRENT_VERSION%^).
     echo.
@@ -42,6 +44,9 @@ echo   Installed: %CURRENT_VERSION%    Latest: %latestVersion%
 echo   Download: https://github.com/%UPDATE_REPO%/releases/latest
 echo ============================================
 echo.
+REM Gate on a keypress so the notice is not buried under the processing output below
+echo Press any key to continue...
+pause >nul
 
 :skip_update_check
 
