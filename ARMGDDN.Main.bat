@@ -123,10 +123,8 @@ goto end
 
 :do_vdbat
 echo Running ARMGDDN.VD.Batmaker.exe...
+REM VD.Batmaker writes VD.bat directly into the game folder now.
 call "%~dp0Resources\ARMGDDN.VD.Batmaker.exe" "%droppedFile%"
-if exist "%~dp0VD.bat" (
-    move "%~dp0VD.bat" "%droppedDir%"
-)
 goto end
 
 :do_coldclient
@@ -174,11 +172,8 @@ goto show_menu
 
 :do_vdbat_menu
 echo Running ARMGDDN.VD.Batmaker.exe...
+REM VD.Batmaker writes VD.bat directly into the game folder now.
 call "%~dp0Resources\ARMGDDN.VD.Batmaker.exe" "%droppedFile%"
-if exist "%~dp0VD.bat" (
-    move "%~dp0VD.bat" "%droppedDir%"
-)
-pause
 goto show_menu
 
 :do_coldclient_menu
