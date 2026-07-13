@@ -2,23 +2,30 @@
 
 Welcome to the ARMGDDN Autocracker Changelog! Same chaos, better emulation, more features. Let's see what trouble we've gotten ourselves into!
 
-## **v1.0.6 - 07/13/2026**
-Bug-fix pass. A Windows update quietly broke the right-click menu, the Steam Settings step tripped over where it was being run from, and a few smaller papercuts got sanded down.
+## **v1.0.7 - 07/13/2026**
+A Windows 11 update quietly broke the right-click menu, and the Steam Settings step tripped over where Windows was launching it from. Both fixed.
 
 **Highlights**
-- 🖱️ **Right-Click Menu Fixed on Windows 11:** After a Windows update, the *ARMGDDN Autocracker* submenu would still appear but clicking anything inside it did nothing — throwing *"This file does not have an app associated with it for performing this action"* on EXEs or *"The parameter is incorrect"* on DLLs. The menu was built with an undocumented cascade trick (empty `SubCommands` + a nested `shell` key) that newer Windows builds stopped honoring. Rebuilt using the **documented `CommandStore` cascade method** — the same one Windows itself uses — so the nested menu works again. **Re-run the context-menu installer** to pick up the fix.
-- 📁 **"Access is Denied" on steam_settings Fixed:** Generating Steam Settings from the context menu failed with `PermissionError: [WinError 5] Access is denied: 'steam_settings'`. The tool creates that folder relative to its working directory, and the context menu launches from `C:\Windows\System32` (not writable). It now switches into the **game folder** before generating, so `steam_settings` lands right next to your game where it belongs — for both the DLL Autocracker and Cold Client flows.
-- 🧯 **Friendlier Failure if It Really Can't Write:** If the destination genuinely isn't writable (read-only folder, `Program Files`, etc.), Steam Settings now prints a **clear, specific message** telling you what's wrong and how to fix it, instead of dumping a raw Python traceback.
-- 🔔 **Update Check You Can Actually See:** The daily update check now gates its banner on a keypress, surfaces failures instead of silently no-op'ing, and forces TLS 1.2 so the GitHub call doesn't quietly fail.
-- 🏆 **Achievement Icon 403 Fixed:** Achievements that have no uploaded icon no longer cause a 403 during Steam Settings generation.
-- 🧵 **No More stdin Crash:** Interactive prompts no longer crash with `lost sys.stdin` when the tool runs without an attached console.
+- 🖱️ **Right-Click Menu Fixed on Windows 11:** After a Windows update, the *ARMGDDN Autocracker* submenu still appeared but clicking anything inside it did nothing — throwing *"This file does not have an app associated with it for performing this action"* on EXEs or *"The parameter is incorrect"* on DLLs. The menu had been built with an undocumented cascade trick (an empty `SubCommands` value plus a nested `shell` key) that newer Windows builds stopped honoring. It's been rebuilt using the **documented `CommandStore` cascade method** — the same one Windows itself uses — so the nested menu works again. Drag-and-drop was never affected.
+- 📁 **"Access is Denied" on steam_settings Fixed:** Cracking from the context menu could die with `PermissionError: [WinError 5] Access is denied: 'steam_settings'`. Steam Settings creates that folder relative to its working directory, and the context menu launches the tool from `C:\Windows\System32` (not writable). It now switches into the **game folder** first, so `steam_settings` lands right next to your game where it belongs — for both the DLL Autocracker and Cold Client flows.
+- 🧯 **Friendlier Failure if It Really Can't Write:** If the destination genuinely isn't writable (a Read-only game folder, `Program Files`, etc.), Steam Settings now prints a **clear, specific message** explaining what's wrong and how to fix it, instead of dumping a raw Python traceback.
 
 **Technical Details**
-- Context menu: `ContextMenuRegEdits.bat` now defines each submenu leaf once under `HKLM\...\Explorer\CommandStore\shell` and references them by name from the `exefile` / `dllfile` parents via a `SubCommands` list; installer cleanup and the uninstaller remove the CommandStore verbs (and the retired container keys).
+- Context menu: `ContextMenuRegEdits.bat` defines each submenu leaf once under `HKLM\...\Explorer\CommandStore\shell` and references them by name from the `exefile` / `dllfile` parents via a `SubCommands` list; installer cleanup and the uninstaller remove the CommandStore verbs (and the retired container keys).
 - Working directory: `ARMGDDN.Autocracker.bat` and `ARMGDDN.Cold.Client.bat` `cd /d "%droppedDir%"` before invoking `ARMGDDN.Steam.Settings.exe`; the Python side wraps `os.makedirs('steam_settings')` to catch `PermissionError` and exit with guidance.
 
 **Notes**
-- Re-run the context-menu installer after updating so the menu is rebuilt with the working method. Upgrading from a broken menu? The installer wipes the old entries first, so it repairs itself.
+- **Re-run the context-menu installer** after updating so the menu is rebuilt with the working method. Upgrading from the broken menu? The installer wipes the old entries first, so it repairs itself.
+
+---
+
+## **v1.0.6 - 07/12/2026**
+No more 403s. A quieter release focused on schema-fetch reliability and a couple of crash fixes.
+
+**Highlights**
+- 🏆 **Achievement Icon 403 Fixed:** Achievements that have no uploaded icon no longer trigger a 403 during Steam Settings generation, so games with partial icon sets stop failing.
+- 🔔 **Update Check You Can Actually See:** The daily update check now gates its banner on a keypress, surfaces failures instead of silently no-op'ing, and forces TLS 1.2 so the GitHub call doesn't quietly fail.
+- 🧵 **No More stdin Crash:** Interactive prompts no longer crash with `lost sys.stdin` when the tool runs without an attached console.
 
 ---
 
