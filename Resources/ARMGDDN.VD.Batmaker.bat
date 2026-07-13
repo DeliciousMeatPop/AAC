@@ -27,7 +27,24 @@ echo.
 echo.
 TIMEOUT /T 3
 
-echo "C:\Program Files\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe" "%~nx1" ^%cstm% > VD.bat
+REM Write VD.bat straight into the GAME folder (%~dp1) with an absolute
+REM path. Using a bare "> VD.bat" wrote it relative to the current dir,
+REM which is C:\Windows\System32 when launched from the context menu --
+REM so it silently failed (not writable) or landed somewhere invisible.
+echo "C:\Program Files\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe" "%~nx1" ^%cstm% > "%~dp1VD.bat"
+
+if exist "%~dp1VD.bat" (
+    echo.
+    echo Created VD.bat in:
+    echo   %~dp1
+) else (
+    echo.
+    echo ERROR: Could not create VD.bat in:
+    echo   %~dp1
+    echo That folder may be read-only or otherwise not writable.
+)
+echo.
+pause
 goto :end
 
 :end
