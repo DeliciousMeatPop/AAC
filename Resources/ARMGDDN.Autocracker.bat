@@ -180,6 +180,12 @@ echo   - steam_settings/configs.user.ini (user settings)
 echo.
 pause
 
+REM Steam Settings creates the steam_settings\ folder relative to the
+REM current directory, so make sure we're IN the game folder first.
+REM Without this it inherits whatever dir it was launched from -- e.g.
+REM C:\Windows\System32 when started from the context menu -- and
+REM makedirs('steam_settings') fails with "Access is denied" (WinError 5).
+cd /d "%droppedDir%"
 "%batchDir%ARMGDDN.Steam.Settings.exe" %appId%
 
 echo.

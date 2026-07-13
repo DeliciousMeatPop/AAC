@@ -283,6 +283,11 @@ echo   - steam_settings/configs.app.ini (DLC)
 echo   - steam_settings/configs.user.ini (user settings)
 echo.
 
+REM Steam Settings creates steam_settings\ relative to the current dir,
+REM so cd into the game folder first. Otherwise it inherits the launch
+REM dir (e.g. C:\Windows\System32 from the context menu) and fails with
+REM "Access is denied" (WinError 5) trying to create the folder there.
+cd /d "%droppedDir%"
 "%batchDir%ARMGDDN.Steam.Settings.exe" %appId%
 
 echo.

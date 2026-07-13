@@ -1064,10 +1064,26 @@ for appid in appids:
 
     out_dir = "steam_settings"
 
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+    except PermissionError:
+        print()
+        print("ERROR: Access denied creating the 'steam_settings' folder here:")
+        print(f"   {os.path.abspath(out_dir)}")
+        print()
+        print("This means the destination isn't writable. Common causes:")
+        print("  - the game folder (or a parent) is set to Read-only,")
+        print("  - the game is under a protected path like Program Files, or")
+        print("  - the tool was launched in a protected dir (e.g. System32).")
+        print()
+        print("Fix: clear Read-only on the game folder (right-click ->")
+        print("Properties -> uncheck Read-only), or move the game somewhere")
+        print("writable, then run this option again.")
+        print()
+        _safe_input("Press Enter to exit...")
+        raise SystemExit(1)
 
-    print(f"Outputting config to {out_dir}")
+    print(f"Outputting config to {os.path.abspath(out_dir)}")
 
     raw = client.get_product_info(apps=[appid])
     game_info = raw["apps"][appid]
