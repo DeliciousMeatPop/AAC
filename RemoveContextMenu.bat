@@ -31,6 +31,8 @@ echo.
 :: -------------------------------------------------------
 echo Removing current menu structure...
 for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\ARMGDDNAutocracker" /f >nul 2>&1
+:: Dedicated ExtendedSubCommandsKey container keys that hold the submenu leaves
+for %%K in ("ARMGDDNAutocracker.Exe" "ARMGDDNAutocracker.Dll") do reg delete "HKCR\%%~K" /f >nul 2>&1
 
 :: -------------------------------------------------------
 ::  Retired OG / GBE nested submenus (in case a parent lingered)

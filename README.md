@@ -374,6 +374,12 @@ ARMGDDN.Autocracker/
 
 > **Tip:** Do the folder exclusion *first*, then extract/use the tool. If you extract into a non-excluded folder, Defender can grab the emulator DLLs before you ever get to use them.
 
+### Right-click submenu items do nothing / error, but drag-and-drop works
+
+If dragging a file onto `ARMGDDN.Main.exe` works fine, but clicking an item **inside** the *ARMGDDN Autocracker* right-click submenu throws *"This file does not have an app associated with it…"* or *"The parameter is incorrect,"* and this started after a Windows update/reboot — this was a real bug in older builds. The cascading submenu was built with an undocumented registry trick that newer Windows versions stopped honoring, so the submenu drew but its clicks no longer resolved to a command.
+
+**Fixed in the current installer** (it now uses Windows' documented `ExtendedSubCommandsKey` cascade). **Re-run the context-menu installer** to rebuild the menu correctly. In the meantime you can keep working via **drag-and-drop** onto `ARMGDDN.Main.exe`, which is unaffected.
+
 ### One specific option fails but the rest work
 
 If only *one* option errors out (and it's not the Windows-launch error above), it's more likely a missing bundled file. Confirm the matching helper still exists under `Resources\` (e.g. Steam Stub Remover needs `Resources\SteamlessCLI\Steamless.CLI.exe`; Steam Interfaces needs `Resources\Tools\generate_interfaces_file.exe`). If a helper is missing, it was probably quarantined too — see the antivirus steps above, or re-extract from the release zip.
