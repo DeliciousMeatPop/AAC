@@ -116,6 +116,8 @@ if exist "%dotnetInstaller%" (
 :: -------------------------------------------------------
 echo Cleaning up any previous / outdated menu entries...
 for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\ARMGDDNAutocracker" /f >nul 2>&1
+:: CommandStore leaf verbs (current) and retired ExtendedSubCommandsKey container keys
+for %%V in (Crack Cold Stub VD Interfaces) do reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell\ARMGDDNAutocracker.%%V" /f >nul 2>&1
 for %%K in ("ARMGDDNAutocracker.Exe" "ARMGDDNAutocracker.Dll") do reg delete "HKCR\%%~K" /f >nul 2>&1
 for %%V in ("01_GBE" "02_OG" "01_OG" "02_GBE" "GBE Fork" "OG GSE") do for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\ARMGDDNAutocracker\shell\%%~V" /f >nul 2>&1
 for %%K in ("AutoCracker" "ColdClient" "Remove Steam Stub" "VD bat" "ARMGDDN Autocracker" "ARMGDDN Cold Client" "ARMGDDN Steam Stub Remover" "ARMGDDN VD Batmaker" "SteamInterfaces" "Steam Interfaces" "ARMGDDN_Autocracker" "ARMGDDN-Autocracker" "Autocracker") do for %%T in (exefile dllfile Directory) do reg delete "HKCR\%%T\shell\%%~K" /f >nul 2>&1
@@ -124,52 +126,52 @@ echo.
 
 :: -------------------------------------------------------
 ::  PARENT MENUS FOR EXE / DLL
-::  Cascading submenus use ExtendedSubCommandsKey -- a DOCUMENTED,
-::  supported method -- pointing at a dedicated container key whose
-::  \shell subkey holds the leaf commands.
+::  Cascading submenus use the CommandStore "SubCommands" method --
+::  the documented, supported cascade that Windows itself uses. Each
+::  leaf verb is defined once in HKLM\...\CommandStore\shell, and the
+::  parent menu lists them by name in its SubCommands value.
 ::
-::  We used to use the undocumented "empty SubCommands value + nested
-::  \shell subkey" trick. Newer Windows builds stopped honoring it: the
-::  submenu still drew, but clicking a leaf no longer resolved to its
-::  command and Windows fell back to opening the file itself, throwing
-::  "This file does not have an app associated with it..." / "The
-::  parameter is incorrect." ExtendedSubCommandsKey resolves correctly.
+::  History: we first used the undocumented "empty SubCommands value +
+::  nested \shell subkey" trick. Newer Windows 11 builds stopped
+::  honoring it -- the submenu still drew, but clicking a leaf no longer
+::  resolved to its command, so Explorer fell back to opening the file
+::  and threw "This file does not have an app associated with it..."
+::  (on EXEs) / "The parameter is incorrect." (on DLLs). The
+::  ExtendedSubCommandsKey method failed the same way on those builds;
+::  CommandStore is what actually works.
 :: -------------------------------------------------------
-for %%T in (exefile dllfile) do reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "MUIVerb" /t REG_SZ /d "ARMGDDN Autocracker" /f
-for %%T in (exefile dllfile) do reg add "HKCR\%%T\shell\ARMGDDNAutocracker" /v "Icon" /t REG_SZ /d "%aacIcon%" /f
-reg add "HKCR\exefile\shell\ARMGDDNAutocracker" /v "ExtendedSubCommandsKey" /t REG_SZ /d "ARMGDDNAutocracker.Exe" /f
-reg add "HKCR\dllfile\shell\ARMGDDNAutocracker" /v "ExtendedSubCommandsKey" /t REG_SZ /d "ARMGDDNAutocracker.Dll" /f
+set "CS=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\CommandStore\shell"
 
-:: -------------------------------------------------------
-::  EXE SUBMENU: Autocracker / Cold Client / Stub / VD Bat
-::  (lives under the container key referenced above)
-:: -------------------------------------------------------
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\01_Autocracker" /v "Icon"   /d "%mainIcon%" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\01_Autocracker\command" /ve /d "\"%main%\" \"%%1\"" /f
+:: --- leaf verbs (defined once, referenced by name from the parents) ---
+reg add "%CS%\ARMGDDNAutocracker.Crack" /v "MUIVerb" /d "Autocracker" /f
+reg add "%CS%\ARMGDDNAutocracker.Crack" /v "Icon"   /d "%mainIcon%" /f
+reg add "%CS%\ARMGDDNAutocracker.Crack\command" /ve /d "\"%main%\" \"%%1\"" /f
 
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\02_ColdClient" /v "MUIVerb" /d "Cold Client" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\02_ColdClient" /v "Icon"   /d "%coldIcon%" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\02_ColdClient\command" /ve /d "\"%main%\" \"%%1\" \"3\"" /f
+reg add "%CS%\ARMGDDNAutocracker.Cold" /v "MUIVerb" /d "Cold Client" /f
+reg add "%CS%\ARMGDDNAutocracker.Cold" /v "Icon"   /d "%coldIcon%" /f
+reg add "%CS%\ARMGDDNAutocracker.Cold\command" /ve /d "\"%main%\" \"%%1\" \"3\"" /f
 
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\03_SteamStub" /v "MUIVerb" /d "Steam Stub Remover" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\03_SteamStub" /v "Icon"   /d "%stubIcon%" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\03_SteamStub\command" /ve /d "\"%main%\" \"%%1\" \"1\"" /f
+reg add "%CS%\ARMGDDNAutocracker.Stub" /v "MUIVerb" /d "Steam Stub Remover" /f
+reg add "%CS%\ARMGDDNAutocracker.Stub" /v "Icon"   /d "%stubIcon%" /f
+reg add "%CS%\ARMGDDNAutocracker.Stub\command" /ve /d "\"%main%\" \"%%1\" \"1\"" /f
 
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\04_VDBat" /v "MUIVerb" /d "VD Batmaker (VR)" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\04_VDBat" /v "Icon"   /d "%vdIcon%" /f
-reg add "HKCR\ARMGDDNAutocracker.Exe\shell\04_VDBat\command" /ve /d "\"%main%\" \"%%1\" \"2\"" /f
+reg add "%CS%\ARMGDDNAutocracker.VD" /v "MUIVerb" /d "VD Batmaker (VR)" /f
+reg add "%CS%\ARMGDDNAutocracker.VD" /v "Icon"   /d "%vdIcon%" /f
+reg add "%CS%\ARMGDDNAutocracker.VD\command" /ve /d "\"%main%\" \"%%1\" \"2\"" /f
 
-:: -------------------------------------------------------
-::  DLL SUBMENU: Autocracker / Steam Interfaces
-:: -------------------------------------------------------
-reg add "HKCR\ARMGDDNAutocracker.Dll\shell\01_Autocracker" /v "MUIVerb" /d "Autocracker" /f
-reg add "HKCR\ARMGDDNAutocracker.Dll\shell\01_Autocracker" /v "Icon"   /d "%mainIcon%" /f
-reg add "HKCR\ARMGDDNAutocracker.Dll\shell\01_Autocracker\command" /ve /d "\"%main%\" \"%%1\"" /f
+reg add "%CS%\ARMGDDNAutocracker.Interfaces" /v "MUIVerb" /d "Steam Interfaces" /f
+reg add "%CS%\ARMGDDNAutocracker.Interfaces" /v "Icon"   /d "%coldIcon%" /f
+reg add "%CS%\ARMGDDNAutocracker.Interfaces\command" /ve /d "\"%siExe%\" \"%%1\"" /f
 
-reg add "HKCR\ARMGDDNAutocracker.Dll\shell\02_SteamInterfaces" /v "MUIVerb" /d "Steam Interfaces" /f
-reg add "HKCR\ARMGDDNAutocracker.Dll\shell\02_SteamInterfaces" /v "Icon"   /d "%coldIcon%" /f
-reg add "HKCR\ARMGDDNAutocracker.Dll\shell\02_SteamInterfaces\command" /ve /d "\"%siExe%\" \"%%1\"" /f
+:: --- EXE parent menu: Autocracker / Cold Client / Stub / VD Bat ---
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker" /v "MUIVerb" /t REG_SZ /d "ARMGDDN Autocracker" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker" /v "Icon" /t REG_SZ /d "%aacIcon%" /f
+reg add "HKCR\exefile\shell\ARMGDDNAutocracker" /v "SubCommands" /t REG_SZ /d "ARMGDDNAutocracker.Crack;ARMGDDNAutocracker.Cold;ARMGDDNAutocracker.Stub;ARMGDDNAutocracker.VD" /f
+
+:: --- DLL parent menu: Autocracker / Steam Interfaces ---
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker" /v "MUIVerb" /t REG_SZ /d "ARMGDDN Autocracker" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker" /v "Icon" /t REG_SZ /d "%aacIcon%" /f
+reg add "HKCR\dllfile\shell\ARMGDDNAutocracker" /v "SubCommands" /t REG_SZ /d "ARMGDDNAutocracker.Crack;ARMGDDNAutocracker.Interfaces" /f
 
 if defined haveNircmd "%nircmdPath%" speak text "Added executable and DLL context menus."
 
