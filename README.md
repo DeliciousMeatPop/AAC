@@ -349,6 +349,41 @@ ARMGDDN.Autocracker/
         └── windowsdesktop-runtime-10.0.1-win-x64.exe  # .NET runtime (auto-installed)
 ```
 
+## 🩺 Troubleshooting
+
+### Context-menu options suddenly fail (especially after a reboot or Windows update)
+
+**Symptoms** — a menu option that worked fine yesterday now throws a *Windows* error the moment you click it:
+
+- *"This file does not have an app associated with it for performing this action."*
+- *"The parameter is incorrect."*
+- *"Windows cannot find `ARMGDDN.Main.exe`…"*
+
+**What it means:** these errors come from **Windows Explorer**, not from the Autocracker. Every EXE and DLL menu option runs the same thing under the hood — `ARMGDDN.Main.exe "<the file you right-clicked>"`. So if *multiple different* options (e.g. Steam Stub Remover on an EXE **and** Autocracker on a DLL) all break at once, it's because Windows can no longer launch `ARMGDDN.Main.exe` itself. The registry menu entries still point at it, but the file is missing or blocked, so Windows shows a generic "no app associated / parameter is incorrect" error.
+
+**The cause is almost always your antivirus.** Windows Defender (and others) routinely false-flag the ARMGDDN executables and the GBE-Fork `steam_api*.dll` emulator files as *HackTool* and quarantine them — and a **reboot, a Defender definition update, or a fresh scan is exactly when that happens**. That's why it "worked before I restarted my PC." Nothing in the tool changed; the files got yanked out from under it.
+
+**Fix it:**
+
+1. **Restore the files.** Windows Security → *Virus & threat protection* → *Protection history*. Look for `ARMGDDN.Main.exe`, `steam_api64.dll`, `steam_api.dll`, etc. listed as removed/quarantined, and **Restore / Allow** them.
+2. **Exclude the folders *before* using the tool again** — otherwise real-time protection just quarantines them right back:
+   - Use the tool's own **AAC Folder Exclude**: right-click the `ARMGDDN.Autocracker` folder → *AAC Folder Exclude*.
+   - Exclude your **games / repacks folder too** (the folder holding the EXEs and DLLs you're cracking).
+   - Or manually: Windows Security → *Virus & threat protection* → *Manage settings* → *Exclusions* → *Add an exclusion* → *Folder*.
+3. **If the files are actually gone** (not just quarantined), re-extract the release zip into a folder you've **already excluded**, then re-run the context-menu installer.
+
+> **Tip:** Do the folder exclusion *first*, then extract/use the tool. If you extract into a non-excluded folder, Defender can grab the emulator DLLs before you ever get to use them.
+
+### Right-click submenu items do nothing / error, but drag-and-drop works
+
+If dragging a file onto `ARMGDDN.Main.exe` works fine, but clicking an item **inside** the *ARMGDDN Autocracker* right-click submenu throws *"This file does not have an app associated with it…"* or *"The parameter is incorrect,"* and this started after a Windows update/reboot — this was a real bug in older builds. The cascading submenu was built with an undocumented registry trick that newer Windows versions stopped honoring, so the submenu drew but its clicks no longer resolved to a command.
+
+**Fixed in the current installer** (it now uses Windows' documented `ExtendedSubCommandsKey` cascade). **Re-run the context-menu installer** to rebuild the menu correctly. In the meantime you can keep working via **drag-and-drop** onto `ARMGDDN.Main.exe`, which is unaffected.
+
+### One specific option fails but the rest work
+
+If only *one* option errors out (and it's not the Windows-launch error above), it's more likely a missing bundled file. Confirm the matching helper still exists under `Resources\` (e.g. Steam Stub Remover needs `Resources\SteamlessCLI\Steamless.CLI.exe`; Steam Interfaces needs `Resources\Tools\generate_interfaces_file.exe`). If a helper is missing, it was probably quarantined too — see the antivirus steps above, or re-extract from the release zip.
+
 ## ⚠️ Disclaimer
 
 This tool is for educational purposes and for games you legally own. We're not responsible for:
