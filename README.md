@@ -378,7 +378,7 @@ ARMGDDN.Autocracker/
 
 If dragging a file onto `ARMGDDN.Main.exe` works fine, but clicking an item **inside** the *ARMGDDN Autocracker* right-click submenu throws *"This file does not have an app associated with it…"* or *"The parameter is incorrect,"* and this started after a Windows update/reboot — this was a real bug in older builds. The cascading submenu was built with an undocumented registry trick that newer Windows versions stopped honoring, so the submenu drew but its clicks no longer resolved to a command.
 
-**Fixed in the current installer** (it now uses Windows' documented `ExtendedSubCommandsKey` cascade). **Re-run the context-menu installer** to rebuild the menu correctly. In the meantime you can keep working via **drag-and-drop** onto `ARMGDDN.Main.exe`, which is unaffected.
+**Fixed in the current installer** (it now builds the submenu with Windows' documented `CommandStore` cascade method — the same one Windows itself uses — instead of an undocumented trick). **Re-run the context-menu installer** to rebuild the menu correctly. In the meantime you can keep working via **drag-and-drop** onto `ARMGDDN.Main.exe`, which is unaffected.
 
 ### One specific option fails but the rest work
 
