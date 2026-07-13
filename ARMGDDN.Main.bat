@@ -10,7 +10,7 @@ REM   Update check (runs at most once per day)
 REM ============================================
 REM Bump CURRENT_VERSION whenever you cut a new release so users get
 REM notified. It is compared against the latest GitHub release tag.
-set "CURRENT_VERSION=v1.0.6"
+set "CURRENT_VERSION=v1.0.7"
 set "UPDATE_REPO=KaladinDMP/ARMGDDN-Autocracker"
 set "updateStamp=%~dp0Resources\.update_check"
 set "today=%DATE%"

@@ -380,6 +380,12 @@ If dragging a file onto `ARMGDDN.Main.exe` works fine, but clicking an item **in
 
 **Fixed in the current installer** (it now builds the submenu with Windows' documented `CommandStore` cascade method — the same one Windows itself uses — instead of an undocumented trick). **Re-run the context-menu installer** to rebuild the menu correctly. In the meantime you can keep working via **drag-and-drop** onto `ARMGDDN.Main.exe`, which is unaffected.
 
+### "Access is denied" creating steam_settings (WinError 5)
+
+If generating Steam Settings dies with `PermissionError: [WinError 5] Access is denied: 'steam_settings'`, the tool couldn't create the `steam_settings` folder. **Fixed in the current build** — it now switches into the game folder before generating (previously, when launched from the context menu, it ran from `C:\Windows\System32` and tried to create the folder there, which isn't writable). Re-run the context-menu installer to get the fix.
+
+If you still hit it on an up-to-date build, the game's own folder genuinely isn't writable: it's marked **Read-only** (right-click the folder → *Properties* → uncheck *Read-only*), or it lives somewhere protected like `Program Files`. Clear read-only or move the game to a normal writable location and try again.
+
 ### One specific option fails but the rest work
 
 If only *one* option errors out (and it's not the Windows-launch error above), it's more likely a missing bundled file. Confirm the matching helper still exists under `Resources\` (e.g. Steam Stub Remover needs `Resources\SteamlessCLI\Steamless.CLI.exe`; Steam Interfaces needs `Resources\Tools\generate_interfaces_file.exe`). If a helper is missing, it was probably quarantined too — see the antivirus steps above, or re-extract from the release zip.
