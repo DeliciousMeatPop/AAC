@@ -418,6 +418,44 @@ def load_webapi_key():
     return ""
 
 
+def game_has_achievements(game_id):
+    """Keyless check: does this game expose ANY achievements?
+
+    Steam's public store endpoint (appdetails) reports the achievement count
+    with no API key and no owner account, so we can decide up front whether a
+    schema fetch is even worth attempting -- and skip both the Web API call
+    and the slow top-owner scan for the many niche/new games that have none.
+
+    Returns:
+      True  -- the store lists one or more achievements.
+      False -- the store definitively lists none.
+      None  -- inconclusive (request failed, or Steam returned no usable data,
+               e.g. some age-gated or delisted titles). The caller should then
+               proceed normally rather than skip, so this can never hide a
+               game's achievements -- it only fast-paths the certain-zero case."""
+    url = ("https://store.steampowered.com/api/appdetails"
+           "?appids={}&l=english".format(game_id))
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return None
+
+    entry = data.get(str(game_id)) if isinstance(data, dict) else None
+    if not isinstance(entry, dict) or not entry.get("success"):
+        return None
+    details = entry.get("data")
+    if not isinstance(details, dict):
+        return None
+    ach = details.get("achievements")
+    total = ach.get("total", 0) if isinstance(ach, dict) else 0
+    try:
+        return int(total) > 0
+    except (TypeError, ValueError):
+        return None
+
+
 def _download_icon_urls(url_map, output_folder):
     """url_map: {filename: full_url}. Download each to output_folder/filename."""
     if not os.path.exists(output_folder):
@@ -542,6 +580,15 @@ def generate_from_webapi(game_id, api_key, output_directory):
 
 
 def generate_achievement_stats(client, game_id, output_directory):
+    # Fast keyless pre-check: if Steam's public store data says this game has
+    # no achievements at all, there is nothing for either the Web API or the
+    # top-owner scan to find -- bail out immediately instead of grinding the
+    # 250+ ID list. Works even without a Web API key. Only skips on a
+    # definitive "none"; an inconclusive result (None) proceeds as normal.
+    if game_has_achievements(game_id) is False:
+        print("Steam reports this game has no achievements -- skipping schema fetch.")
+        return False
+
     # Preferred path: Steam Web API (owner-independent, fast, reliable) when a
     # key is configured. Falls back to the top-owner client scan otherwise.
     api_key = load_webapi_key()
