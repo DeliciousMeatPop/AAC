@@ -2,6 +2,22 @@
 
 Welcome to the ARMGDDN Autocracker Changelog! Same chaos, better emulation, more features. Let's see what trouble we've gotten ourselves into!
 
+## **v1.0.8 - 07/18/2026**
+The Web API key was doing its job — the tool just didn't trust it. Games with no achievements now finish instantly instead of grinding through a 250-account scan that could never find anything.
+
+**Highlights**
+- ⚡ **No More Pointless 12-Minute Scan:** When the Steam Web API answers *"this game has no achievements"* (true for tons of niche/new titles), that answer is **owner-independent and final** — the top-owner scan reads the exact same schema and can't do better. The tool now takes the API at its word and stops, instead of falling back to trying all 250+ Steam IDs at up to 3 seconds each. Games with achievements were already fast; games *without* them (which is most brand-new indies) now finish in a second too, rather than after a multi-minute scan that always ended in "No achievements found." This is the big one behind "the Steam list takes forever."
+- 🔎 **Keyless "Does This Even Have Achievements?" Check — Works Without a Key:** Before touching the Web API *or* the owner scan, the tool now asks Steam's public store endpoint (no API key, no account needed) how many achievements a game has. If the answer is **zero**, it skips the whole schema fetch on the spot. So even users who never added a Web API key stop eating the long scan on achievement-less games. If Steam's answer is inconclusive (age-gated/delisted titles), it just proceeds as before — the check only ever *fast-paths* a certain-zero, it can never hide a game's achievements.
+- 🎯 **"Web API returned no schema" Was Usually Right:** That message almost always meant *the game genuinely has no achievements*, not that your key was pasted wrong (a bad key throws a distinct **403** message). The wording now says **"this game has no achievements or stats"** when the API answered, and **"Web API request failed; falling back…"** only when the request actually failed — so you can tell the two apart at a glance.
+- 🔢 **Stats-Only Games No Longer Trigger a Fallback:** Games that expose stats but no achievements used to be treated as a Web API failure (they returned an empty list), kicking off the owner scan for nothing. They're now correctly recognized as handled.
+
+**Technical Details**
+- New `game_has_achievements(game_id)` queries `store.steampowered.com/api/appdetails` (keyless) and returns `True` / `False` / `None`; `generate_achievement_stats()` returns early only on a definitive `False`, so an inconclusive or errored check never suppresses a fetch.
+- `generate_from_webapi()` returns a tri-state: `"ok"` when the API responds HTTP 200 (achievements/stats written if present; authoritative "none" otherwise) and `None` **only** when the request itself fails (network error / rejected key). `generate_achievement_stats()` now falls back to the top-owner scan solely on `None`, so a valid empty response short-circuits the scan entirely.
+- The top-owner scan (`my_steam_ids.txt` first, then the bundled ~250) is now what it was always meant to be: a fallback for when the Web API is unreachable or unkeyed — not something that runs after every keyed lookup. Reminder: it can only read your own SteamID's stats if your Steam profile **Game details** privacy is set to Public, and only for games you've actually generated stats in.
+
+---
+
 ## **v1.0.7 - 07/13/2026**
 A Windows 11 update quietly broke the right-click menu, and the Steam Settings step tripped over where Windows was launching it from. Both fixed.
 
