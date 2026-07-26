@@ -418,7 +418,7 @@ Standing on the shoulders of giants (and some regular-sized people too):
 
 ## 🔗 Links
 
-- **ARMGDDN Autocracker (this repo)**: [github.com/KaladinDMP/ARMGDDN-Autocracker](https://github.com/KaladinDMP/ARMGDDN-Autocracker)
+- **ARMGDDN Autocracker (this repo)**: [github.com/DeliciousMeatPop/AAC](https://github.com/DeliciousMeatPop/AAC)
 - **GBE Fork (the engine)**: [github.com/Detanup01/gbe_fork](https://github.com/Detanup01/gbe_fork)
 - **cs.rin.ru Thread**: [cs.rin.ru/forum/viewtopic.php?f=20&t=153779](https://cs.rin.ru/forum/viewtopic.php?f=20&t=153779)
 
