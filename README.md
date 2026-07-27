@@ -1,7 +1,8 @@
 # ARMGDDN Autocracker 🎮🔧🔥
 
-<img width="872" height="512" alt="image" src="https://github.com/user-attachments/assets/2f024aae-3bcb-4858-9430-a4cb1d213bd1" />
-)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/7e84ce00-5743-43af-8096-2ba838db8bd2" alt="ARMGDDN Autocracker" width="700">
+</p>
 
 **Right-click, crack, play. Now powered by [GBE Fork](https://github.com/Detanup01/gbe_fork).**
 
@@ -436,3 +437,24 @@ Got questions? Found a bug? Just want to complain? Find me:
 *Remember: If it works, you're welcome. If it doesn't, you probably did something wrong. But we'll help anyway because we're nice like that.*
 
 **Happy cracking!** 🎮🔓
+
+---
+
+![Visitors](https://api.visitorbadge.io/api/visitors?path=DeliciousMeatPop%2FAAC&label=People%20Who%20Forgot%20To%20Star%20This%20Repo&countColor=%23ba68c8&style=plastic)<br>
+![Last Commit](https://img.shields.io/github/last-commit/DeliciousMeatPop/AAC?label=Last%20Updated)<br>
+![Created](https://img.shields.io/github/created-at/DeliciousMeatPop/AAC?label=Created)<br>
+![Monthly Commits](https://img.shields.io/github/commit-activity/m/DeliciousMeatPop/AAC?label=Monthly%20Commits)<br>
+
+## ⭐ Do the thing
+
+You’re already here. You’ve already scrolled.
+
+Just hit the ⭐ and we both win.
+
+⭐ Star this repo please
+
+---
+
+[![GitHub stars for this repo](https://img.shields.io/github/stars/DeliciousMeatPop/AAC?style=social)](https://github.com/DeliciousMeatPop/AAC) = **GitHub stars for this repo**
+
+[![GitHub stars in total (all repos)](https://img.shields.io/github/stars/DeliciousMeatPop?style=social)](https://github.com/DeliciousMeatPop) = **GitHub stars in total (all repos)**
