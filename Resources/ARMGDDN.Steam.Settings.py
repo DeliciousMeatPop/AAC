@@ -3,6 +3,7 @@ import sys
 import json
 import urllib.request
 import urllib.error
+import shutil
 import threading
 import queue
 
@@ -47,6 +48,8 @@ def get_base_path():
         return os.path.dirname(os.path.abspath(__file__))
 
 BASE_PATH = get_base_path()
+FALLBACK_ICON = os.path.join(BASE_PATH, "Tools", "achievement_fallback.jpg")
+FALLBACK_ICON_GRAY = os.path.join(BASE_PATH, "Tools", "achievement_fallback_gray.jpg")
 LOCAL_STEAM_IDS_FILE = os.path.join(BASE_PATH, LOCAL_STEAM_IDS_FILE)
 TOP_OWNERS_FILE = os.path.join(BASE_PATH, "Tools", TOP_OWNERS_FILE)
 
@@ -381,7 +384,12 @@ def download_achievement_images(game_id, image_names, output_folder):
                 except urllib.error.URLError as e:
                     print(f"URLError downloading {url}: {e.reason}")
             if not succeeded:
-                print(f"Error: could not download {name}")
+                fallback = FALLBACK_ICON_GRAY if "gray" in name.lower() else FALLBACK_ICON
+                if os.path.isfile(fallback):
+                    shutil.copy2(fallback, os.path.join(output_folder, name))
+                    print(f"Using fallback icon for {name}")
+                else:
+                    print(f"Error: could not download {name}")
             q.task_done()
 
     num_threads = 20
@@ -474,7 +482,12 @@ def _download_icon_urls(url_map, output_folder):
                     with open(os.path.join(output_folder, fname), "wb") as f:
                         f.write(resp.read())
             except Exception as e:
-                print(f"Error downloading {fname}: {e}")
+                fallback = FALLBACK_ICON_GRAY if "gray" in fname.lower() else FALLBACK_ICON
+                if os.path.isfile(fallback):
+                    shutil.copy2(fallback, os.path.join(output_folder, fname))
+                    print(f"Using fallback icon for {fname}")
+                else:
+                    print(f"Error downloading {fname}: {e}")
             q.task_done()
 
     threads = [threading.Thread(target=worker, daemon=True) for _ in range(20)]
