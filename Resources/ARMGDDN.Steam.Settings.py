@@ -33,7 +33,7 @@ HARDCODED_STEAM_IDS = [
     76561198019712127, 76561197976597747, 76561197963550511, 76561198044596404,
 ]
 
-STEAM_IDS_URL = "https://raw.githubusercontent.com/KaladinDMP/steam-top-accounts-data/main/steam_ids_only.txt"
+STEAM_IDS_URL = "https://raw.githubusercontent.com/DeliciousMeatPop/steam-top-accounts-data/main/steam_ids_only.txt"
 LOCAL_STEAM_IDS_FILE = "steam_ids_cache.txt"
 # Bundled list of ~250 "top owner" Steam IDs. A game's stats schema is fetched
 # by asking an account that owns the game, so a larger owner pool massively
