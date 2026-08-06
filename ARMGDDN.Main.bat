@@ -10,7 +10,7 @@ REM   Update check (runs at most once per day)
 REM ============================================
 REM Bump CURRENT_VERSION whenever you cut a new release so users get
 REM notified. It is compared against the latest GitHub release tag.
-set "CURRENT_VERSION=v1.0.0"
+set "CURRENT_VERSION=v1.0.1"
 set "UPDATE_REPO=DeliciousMeatPop/AAC"
 set "updateStamp=%~dp0Resources\.update_check"
 set "today=%DATE%"
