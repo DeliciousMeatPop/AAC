@@ -359,6 +359,55 @@ def get_stats_schema(client, game_id, owner_id):
     return client.wait_msg(EMsg.ClientGetUserStatsResponse, timeout=3)
 
 
+# Steam moved community images off the old CDN. The Web API still hands out
+# steamcdn-a.akamaihd.net/steamcommunity/public/... links, which now 404 for
+# newer games, while the same path under shared.fastly.steamstatic.com/
+# community_assets/... serves the image. Try the original link first, then
+# the new-CDN substitute.
+OLD_CDN_PREFIXES = (
+    "https://steamcdn-a.akamaihd.net/steamcommunity/public/",
+    "https://cdn.akamai.steamstatic.com/steamcommunity/public/",
+    "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/",
+)
+NEW_CDN_PREFIX = "https://shared.fastly.steamstatic.com/community_assets/"
+
+
+def _cdn_candidates(url):
+    urls = [url]
+    for old in OLD_CDN_PREFIXES:
+        if url.startswith(old):
+            new_url = NEW_CDN_PREFIX + url[len(old):]
+            if new_url not in urls:
+                urls.append(new_url)
+            break
+    return urls
+
+
+def _fetch_image(url, dest):
+    """Download url (falling back to the new CDN) to dest. Returns True on
+    success, False if every candidate failed (errors are printed only then,
+    so a normal old-CDN 404 followed by a new-CDN hit stays quiet)."""
+    errors = []
+    for u in _cdn_candidates(url):
+        try:
+            with urllib.request.urlopen(u, timeout=15) as resp:
+                ctype = resp.headers.get("Content-Type", "")
+                if ctype and not ctype.startswith("image/"):
+                    errors.append(f"not an image ({ctype}): {u}")
+                    continue
+                data = resp.read()
+            with open(dest, "wb") as f:
+                f.write(data)
+            return True
+        except urllib.error.HTTPError as e:
+            errors.append(f"HTTP {e.code}: {u}")
+        except Exception as e:
+            errors.append(f"{e}: {u}")
+    for err in errors:
+        print(f"Download failed, {err}")
+    return False
+
+
 def download_achievement_images(game_id, image_names, output_folder):
     q = queue.Queue()
 
@@ -368,22 +417,8 @@ def download_achievement_images(game_id, image_names, output_folder):
             if name is None:
                 q.task_done()
                 return
-            succeeded = False
-            for u in ["https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/",
-                      "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/"]:
-                url = "{}{}/{}".format(u, game_id, name)
-                try:
-                    with urllib.request.urlopen(url) as response:
-                        image_data = response.read()
-                        with open(os.path.join(output_folder, name), "wb") as f:
-                            f.write(image_data)
-                        succeeded = True
-                        break
-                except urllib.error.HTTPError as e:
-                    print(f"HTTPError downloading {url}: {e.code}")
-                except urllib.error.URLError as e:
-                    print(f"URLError downloading {url}: {e.reason}")
-            if not succeeded:
+            url = "{}images/apps/{}/{}".format(OLD_CDN_PREFIXES[1], game_id, name)
+            if not _fetch_image(url, os.path.join(output_folder, name)):
                 fallback = FALLBACK_ICON_GRAY if "gray" in name.lower() else FALLBACK_ICON
                 if os.path.isfile(fallback):
                     shutil.copy2(fallback, os.path.join(output_folder, name))
@@ -477,17 +512,13 @@ def _download_icon_urls(url_map, output_folder):
                 q.task_done()
                 return
             fname, url = item
-            try:
-                with urllib.request.urlopen(url, timeout=15) as resp:
-                    with open(os.path.join(output_folder, fname), "wb") as f:
-                        f.write(resp.read())
-            except Exception as e:
+            if not _fetch_image(url, os.path.join(output_folder, fname)):
                 fallback = FALLBACK_ICON_GRAY if "gray" in fname.lower() else FALLBACK_ICON
                 if os.path.isfile(fallback):
                     shutil.copy2(fallback, os.path.join(output_folder, fname))
                     print(f"Using fallback icon for {fname}")
                 else:
-                    print(f"Error downloading {fname}: {e}")
+                    print(f"Error: could not download {fname}")
             q.task_done()
 
     threads = [threading.Thread(target=worker, daemon=True) for _ in range(20)]
