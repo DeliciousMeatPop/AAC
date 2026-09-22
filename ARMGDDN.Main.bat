@@ -25,17 +25,21 @@ REM Record today's date first so a failed/offline check still waits a day
 > "%updateStamp%" echo %today%
 
 echo Checking for updates...
-set "latestVersion="
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { (Invoke-RestMethod -Uri 'https://api.github.com/repos/%UPDATE_REPO%/releases/latest' -Headers @{'User-Agent'='ARMGDDN-Autocracker'} -TimeoutSec 10).tag_name } catch { 'ERR ' + $_.Exception.Message }"`) do set "latestVersion=%%V"
+set "updateResult="
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { $t = [string](Invoke-RestMethod -Uri 'https://api.github.com/repos/%UPDATE_REPO%/releases/latest' -Headers @{'User-Agent'='ARMGDDN-Autocracker'} -TimeoutSec 10).tag_name; $a = $t.Trim().TrimStart('vV'); $b = '%CURRENT_VERSION%'.Trim().TrimStart('vV'); try { $newer = [version]$a -gt [version]$b } catch { $newer = $a -ne $b }; if ($newer) { 'NEW ' + $t } else { 'OK ' + $t } } catch { 'ERR ' + $_.Exception.Message }"`) do set "updateResult=%%V"
 
 REM Distinguish a failed check from an up-to-date result so it never silently no-ops
-if not defined latestVersion ( echo Update check skipped ^(no response from GitHub^). & echo. & goto skip_update_check )
-if /i "%latestVersion:~0,4%"=="ERR " ( echo Update check failed: %latestVersion:~4% & echo. & goto skip_update_check )
-if /i "%latestVersion%"=="%CURRENT_VERSION%" (
+REM PowerShell strips any leading "v" and compares as real version numbers, so
+REM tag "1.0.1" vs installed "v1.0.1" counts as the same, and only a NEWER
+REM release is reported (NEW), never an equal or older one (OK).
+if not defined updateResult ( echo Update check skipped ^(no response from GitHub^). & echo. & goto skip_update_check )
+if /i "%updateResult:~0,4%"=="ERR " ( echo Update check failed: %updateResult:~4% & echo. & goto skip_update_check )
+if /i not "%updateResult:~0,4%"=="NEW " (
     echo You are on the latest version ^(%CURRENT_VERSION%^).
     echo.
     goto skip_update_check
 )
+set "latestVersion=%updateResult:~4%"
 
 echo.
 echo ============================================
