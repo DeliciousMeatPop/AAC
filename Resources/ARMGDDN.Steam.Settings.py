@@ -34,8 +34,6 @@ HARDCODED_STEAM_IDS = [
     76561198019712127, 76561197976597747, 76561197963550511, 76561198044596404,
 ]
 
-STEAM_IDS_URL = "https://raw.githubusercontent.com/DeliciousMeatPop/steam-top-accounts-data/main/steam_ids_only.txt"
-LOCAL_STEAM_IDS_FILE = "steam_ids_cache.txt"
 # Bundled list of ~250 "top owner" Steam IDs. A game's stats schema is fetched
 # by asking an account that owns the game, so a larger owner pool massively
 # improves coverage for niche titles (this file replaces the old 20-ID list).
@@ -50,7 +48,6 @@ def get_base_path():
 BASE_PATH = get_base_path()
 FALLBACK_ICON = os.path.join(BASE_PATH, "Tools", "achievement_fallback.jpg")
 FALLBACK_ICON_GRAY = os.path.join(BASE_PATH, "Tools", "achievement_fallback_gray.jpg")
-LOCAL_STEAM_IDS_FILE = os.path.join(BASE_PATH, LOCAL_STEAM_IDS_FILE)
 TOP_OWNERS_FILE = os.path.join(BASE_PATH, "Tools", TOP_OWNERS_FILE)
 
 def get_options_file_path():
@@ -267,52 +264,8 @@ def load_bundled_owner_ids():
     return ids
 
 
-def download_and_merge_steam_ids():
-    """Download and merge Steam IDs from GitHub with hardcoded list."""
-    final_steam_ids = load_bundled_owner_ids()
-    print(f"Starting with {len(final_steam_ids)} bundled top-owner Steam IDs...")
-    
-    try:
-        print("Attempting to download Steam IDs from GitHub...")
-        with urllib.request.urlopen(STEAM_IDS_URL, timeout=10) as response:
-            content = response.read().decode('utf-8')
-            
-            with open(LOCAL_STEAM_IDS_FILE, 'w') as f:
-                f.write(content)
-            
-            github_steam_ids = []
-            for line in content.strip().split('\n'):
-                line = line.strip()
-                if line:
-                    try:
-                        github_steam_ids.append(int(line))
-                    except ValueError:
-                        pass
-            
-            for steam_id in github_steam_ids:
-                if steam_id not in final_steam_ids:
-                    final_steam_ids.append(steam_id)
-                    
-    except Exception as e:
-        print(f"Error downloading Steam IDs: {e}")
-        try:
-            with open(LOCAL_STEAM_IDS_FILE, 'r') as f:
-                content = f.read()
-                for line in content.strip().split('\n'):
-                    line = line.strip()
-                    if line:
-                        try:
-                            steam_id = int(line)
-                            if steam_id not in final_steam_ids:
-                                final_steam_ids.append(steam_id)
-                        except ValueError:
-                            pass
-        except:
-            pass
-    
-    return final_steam_ids
-
-TOP_OWNER_IDS = download_and_merge_steam_ids()
+TOP_OWNER_IDS = load_bundled_owner_ids()
+print(f"Using {len(TOP_OWNER_IDS)} top-owner Steam IDs.")
 
 from stats_schema_achievement_gen import achievements_gen
 from steam.client import SteamClient
