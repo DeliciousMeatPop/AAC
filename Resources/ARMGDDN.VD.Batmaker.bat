@@ -165,11 +165,16 @@ exit /b 0
 :GetStreamerPath
 set "VD_STREAMER="
 set "SKIP_ARGUMENT_GUIDE=0"
+set "CONFIG_NEEDS_RESAVE=0"
 call :LoadConfig
 
 set "VD_STREAMER=%VD_STREAMER:"=%"
+call :RepairStreamerPath
 
-if defined VD_STREAMER if exist "%VD_STREAMER%" goto :eof
+if defined VD_STREAMER if exist "%VD_STREAMER%" (
+    if "%CONFIG_NEEDS_RESAVE%"=="1" call :SaveConfig
+    goto :eof
+)
 
 if defined VD_STREAMER (
     echo.
@@ -259,6 +264,32 @@ if defined VD_STREAMER goto :eof
 rem Backward compatibility with the older one-line config format.
 set /p "VD_STREAMER="<"%CONFIG_FILE%"
 set "VD_STREAMER=%VD_STREAMER:"=%"
+goto :eof
+
+
+:RepairStreamerPath
+rem Self-heal configs where the SKIP_ARGUMENT_GUIDE setting was folded onto
+rem the VD_STREAMER line, for example:
+rem   VD_STREAMER=...\VirtualDesktop.Streamer.exe SKIP_ARGUMENT_GUIDE=1
+rem The "tokens=1,* delims==" parse in :LoadConfig swallows everything after
+rem the first "=" into VD_STREAMER, so the trailing key/value becomes part of
+rem the path and "if exist" then reports it as invalid. Split it back out and
+rem flag the config for a rewrite in the correct two-line format.
+if not defined VD_STREAMER goto :eof
+setlocal EnableDelayedExpansion
+if "!VD_STREAMER!"=="!VD_STREAMER: SKIP_ARGUMENT_GUIDE=!" (
+    rem Nothing folded in; leave the value untouched.
+    endlocal
+    goto :eof
+)
+set "sentinel=!VD_STREAMER: SKIP_ARGUMENT_GUIDE=|!"
+for /f "tokens=1* delims=|" %%a in ("!sentinel!") do (
+    set "cleanpath=%%a"
+    set "foldedskip=%%b"
+)
+endlocal & set "VD_STREAMER=%cleanpath%" & set "SKIP_ARGUMENT_GUIDE=%foldedskip%" & set "CONFIG_NEEDS_RESAVE=1"
+if defined SKIP_ARGUMENT_GUIDE if "%SKIP_ARGUMENT_GUIDE:~0,1%"=="=" set "SKIP_ARGUMENT_GUIDE=%SKIP_ARGUMENT_GUIDE:~1%"
+if not "%SKIP_ARGUMENT_GUIDE%"=="1" set "SKIP_ARGUMENT_GUIDE=0"
 goto :eof
 
 
