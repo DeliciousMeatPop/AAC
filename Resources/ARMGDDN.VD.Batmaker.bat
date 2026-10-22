@@ -168,7 +168,7 @@ set "SKIP_ARGUMENT_GUIDE=0"
 set "CONFIG_NEEDS_RESAVE=0"
 call :LoadConfig
 
-set "VD_STREAMER=%VD_STREAMER:"=%"
+if defined VD_STREAMER set "VD_STREAMER=%VD_STREAMER:"=%"
 call :RepairStreamerPath
 
 if defined VD_STREAMER if exist "%VD_STREAMER%" (
@@ -215,7 +215,7 @@ goto :eof
 :CustomStreamerPath
 set "VD_STREAMER="
 set /p "VD_STREAMER=Paste the absolute path to VirtualDesktop.Streamer.exe: "
-set "VD_STREAMER=%VD_STREAMER:"=%"
+if defined VD_STREAMER set "VD_STREAMER=%VD_STREAMER:"=%"
 
 if not defined VD_STREAMER (
     echo.
@@ -263,7 +263,7 @@ if defined VD_STREAMER goto :eof
 
 rem Backward compatibility with the older one-line config format.
 set /p "VD_STREAMER="<"%CONFIG_FILE%"
-set "VD_STREAMER=%VD_STREAMER:"=%"
+if defined VD_STREAMER set "VD_STREAMER=%VD_STREAMER:"=%"
 goto :eof
 
 
@@ -287,7 +287,12 @@ for /f "tokens=1* delims=|" %%a in ("!sentinel!") do (
     set "cleanpath=%%a"
     set "foldedskip=%%b"
 )
-endlocal & set "VD_STREAMER=%cleanpath%" & set "SKIP_ARGUMENT_GUIDE=%foldedskip%" & set "CONFIG_NEEDS_RESAVE=1"
+for /f "tokens=1,* delims=|" %%x in ("!cleanpath!|!foldedskip!") do (
+    endlocal
+    set "VD_STREAMER=%%x"
+    set "SKIP_ARGUMENT_GUIDE=%%y"
+    set "CONFIG_NEEDS_RESAVE=1"
+)
 if defined SKIP_ARGUMENT_GUIDE if "%SKIP_ARGUMENT_GUIDE:~0,1%"=="=" set "SKIP_ARGUMENT_GUIDE=%SKIP_ARGUMENT_GUIDE:~1%"
 if not "%SKIP_ARGUMENT_GUIDE%"=="1" set "SKIP_ARGUMENT_GUIDE=0"
 goto :eof
