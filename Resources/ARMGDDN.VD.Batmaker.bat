@@ -106,6 +106,13 @@ if not exist "%OUTPUT_FILE%" goto WriteFailed
 >> "%OUTPUT_FILE%" echo set "DISPLAY_ARGS=%%GAME_ARGS%%"
 >> "%OUTPUT_FILE%" echo if not defined DISPLAY_ARGS set "DISPLAY_ARGS=no arguments"
 >> "%OUTPUT_FILE%" echo.
+>> "%OUTPUT_FILE%" echo rem The path above is only a first guess. If it is wrong on this PC, search for the Streamer.
+>> "%OUTPUT_FILE%" echo if exist "%%VD_STREAMER%%" goto StreamerFound
+>> "%OUTPUT_FILE%" echo set "VD_STREAMER="
+>> "%OUTPUT_FILE%" echo for %%%%P in ("%%ProgramFiles%%\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe" "%%ProgramW6432%%\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe" "%%ProgramFiles(x86)%%\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe" "%%LocalAppData%%\Programs\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe" "%%LocalAppData%%\Virtual Desktop Streamer\VirtualDesktop.Streamer.exe") do if not defined VD_STREAMER if exist %%%%P set "VD_STREAMER=%%%%~P"
+>> "%OUTPUT_FILE%" echo if not defined VD_STREAMER for /f "usebackq delims=" %%%%P in (`powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$p = (Get-Process -Name 'VirtualDesktop.Streamer' -ErrorAction SilentlyContinue ^^^| Select-Object -First 1).Path; if (-not $p) { $p = Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue ^^^| Get-ItemProperty ^^^| Where-Object { $_.DisplayName -like 'Virtual Desktop Streamer*' -and $_.InstallLocation } ^^^| ForEach-Object { Join-Path $_.InstallLocation 'VirtualDesktop.Streamer.exe' } ^^^| Where-Object { Test-Path $_ } ^^^| Select-Object -First 1 }; if ($p) { $p }"`) do if not defined VD_STREAMER set "VD_STREAMER=%%%%P"
+>> "%OUTPUT_FILE%" echo :StreamerFound
+>> "%OUTPUT_FILE%" echo.
 >> "%OUTPUT_FILE%" echo if not exist "%%VD_STREAMER%%" ^(
 >> "%OUTPUT_FILE%" echo     echo ERROR: Virtual Desktop Streamer was not found at:
 >> "%OUTPUT_FILE%" echo     echo "%%VD_STREAMER%%"
