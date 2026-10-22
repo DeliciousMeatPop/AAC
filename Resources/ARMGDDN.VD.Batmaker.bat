@@ -181,7 +181,7 @@ if defined VD_STREAMER (
     echo The saved Virtual Desktop Streamer path is no longer valid:
     echo "%VD_STREAMER%"
     echo.
-    echo It needs to be configured again.
+    echo Searching for it again...
     echo.
 )
 
@@ -189,26 +189,43 @@ goto ConfigureStreamer
 
 
 :ConfigureStreamer
-echo Virtual Desktop Streamer setup
-echo.
-echo Default location:
-echo "%DEFAULT_VD%"
-echo.
-choice /C YN /N /M "Is Virtual Desktop Streamer installed there? [Y/N]: "
+echo Looking for Virtual Desktop Streamer...
+call :AutoDetectStreamer
 
-if errorlevel 2 goto CustomStreamerPath
-
-set "VD_STREAMER=%DEFAULT_VD%"
-
-if not exist "%VD_STREAMER%" (
+if defined VD_STREAMER (
+    echo Found:
+    echo "%VD_STREAMER%"
     echo.
-    echo Virtual Desktop Streamer was not found in the default location.
-    echo.
-    goto CustomStreamerPath
+    call :SaveConfig
+    if errorlevel 1 goto ConfigSaveFailed
+    goto :eof
 )
 
-call :SaveConfig
-if errorlevel 1 goto ConfigSaveFailed
+echo.
+echo Virtual Desktop Streamer could not be found automatically.
+echo.
+goto CustomStreamerPath
+
+
+:AutoDetectStreamer
+set "VD_STREAMER="
+set "VD_EXE=VirtualDesktop.Streamer.exe"
+set "VD_DIR=Virtual Desktop Streamer"
+
+for %%P in (
+    "%DEFAULT_VD%"
+    "%ProgramFiles%\%VD_DIR%\%VD_EXE%"
+    "%ProgramW6432%\%VD_DIR%\%VD_EXE%"
+    "%ProgramFiles(x86)%\%VD_DIR%\%VD_EXE%"
+    "%LocalAppData%\Programs\%VD_DIR%\%VD_EXE%"
+    "%LocalAppData%\%VD_DIR%\%VD_EXE%"
+) do if not defined VD_STREAMER if exist %%P set "VD_STREAMER=%%~P"
+if defined VD_STREAMER goto :eof
+
+rem Fall back to a running Streamer process, then the uninstall registry keys.
+for /f "usebackq delims=" %%P in (`powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -Command "$p = (Get-Process -Name 'VirtualDesktop.Streamer' -ErrorAction SilentlyContinue | Select-Object -First 1).Path; if (-not $p) { $p = Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue | Get-ItemProperty | Where-Object { $_.DisplayName -like 'Virtual Desktop Streamer*' -and $_.InstallLocation } | ForEach-Object { Join-Path $_.InstallLocation 'VirtualDesktop.Streamer.exe' } | Where-Object { Test-Path $_ } | Select-Object -First 1 }; if ($p) { $p }" 2^>nul`) do if not defined VD_STREAMER set "VD_STREAMER=%%P"
+
+if defined VD_STREAMER if not exist "%VD_STREAMER%" set "VD_STREAMER="
 goto :eof
 
 
